@@ -11,6 +11,8 @@ CREATE TABLE "Users" (
 CREATE TABLE "UserMeta" (
     "user_id" INTEGER NOT NULL,
     "user_name" TEXT NOT NULL,
+    "birth_date" TEXT,
+    "phone_number" TEXT,
     "selected_answer_count" INTEGER NOT NULL DEFAULT 0,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
