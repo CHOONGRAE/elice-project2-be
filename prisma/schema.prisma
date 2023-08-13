@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id Int @id @default(autoincrement()) 
+  email String
+  password String
+
+  userMeta UserMeta?
+}
+
+model UserMeta{
+  userId Int @id @map("user_id")
+  userName String @map("user_name")
+  selectedAnswerCount Int @default(0) @map("selected_answer_count")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user Users @relation(fields: [userId], references: [id])
+
+  followings Follows[] @relation("Following")
+  followeds Follows[] @relation("Followed")
+  fandoms Fandoms[]
+  subscribes Subscribes[]
+  feeds Feeds[]
+  likes Likes[]
+  comments Comments[]
+  sonminsuRequests SonminsuRequests[]
+  sonminsuAnswers SonminsuAnswers[]
+  buckets Buckets[]
+  image Files?
+}
+
+model Follows {
+  followingUserId Int @map("following_user_id")
+  followedUserId Int @map("followed_user_id")
+  followingUser UserMeta @relation("Following", fields: [followingUserId], references: [userId])
+  followedUser UserMeta @relation("Followed", fields: [followedUserId], references: [userId])
+
+  @@id([followingUserId,followedUserId])
+}
+
+model Fandoms {
+  id Int @id @default(autoincrement()) 
+  admin Int
+  fandomName String @map("fandom_name")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  usersAdmin UserMeta @relation(fields: [admin], references: [userId])
+
+  subscribes Subscribes[]
+  feeds Feeds[]
+  image Files?
+}
+
+model Subscribes {
+  userId Int @map("user_id")
+  fandomId Int @map("fandom_id")
+  user UserMeta @relation(fields: [userId], references: [userId])
+  fandom Fandoms @relation(fields: [fandomId], references: [id])
+
+  @@id([userId,fandomId])
+}
+
+model Feeds {
+  id Int @id @default(autoincrement())
+  author Int
+  fandomId Int @map("fandom_id")
+  content String  
+  createdAt DateTime @default(now()) @map("created_at")
+
+  usersAuthor UserMeta @relation(fields: [author], references: [userId])
+  fandomsFandomId Fandoms @relation(fields: [fandomId], references: [id])
+
+  Likes Likes[]
+  comments Comments[]
+  sonminsuRequests SonminsuRequests[]
+  sonminsuItems SonminsuItems[]
+  images Files[]
+}
+
+model Likes {
+  userId Int @map("user_id")
+  feedId Int @map("feed_id")
+  user UserMeta @relation(fields: [userId], references: [userId])
+  feed Feeds @relation(fields: [feedId], references: [id])
+
+  @@id([userId, feedId])
+}
+
+model Comments {
+  id Int @id @default(autoincrement())
+  feedId Int @map("feed_id")
+  parentId Int @default(0)
+  author Int
+  content String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  feeds Feeds @relation(fields: [feedId], references: [id])
+  parent Comments? @relation("comments_parent_replies", fields: [parentId], references: [id])
+  usersAuthor UserMeta @relation(fields: [author], references: [userId])
+
+  replies Comments[] @relation("comments_parent_replies")
+}
+
+model SonminsuRequests {
+  id Int @id @default(autoincrement())
+  author Int
+  feedId Int @map("feed_id") @default(0)
+  title String
+  content String
+  done Boolean @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user UserMeta @relation(fields: [author], references: [userId])
+  feed Feeds @relation(fields: [feedId], references: [id])
+
+  answers SonminsuAnswers[]
+  images Files?
+}
+
+model SonminsuAnswers {
+  id Int @id @default(autoincrement())
+  author Int
+  requestId Int @map("request_id")
+  content String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user UserMeta @relation(fields: [author], references: [userId])
+  request SonminsuRequests @relation(fields: [requestId], references: [id])
+
+  items SonminsuItems[]
+}
+
+model SonminsuItems {
+  id Int @id @default(autoincrement())
+  feedId Int @map("feed_id")
+  answerId Int @map("answer_id")
+  url String
+  title String
+  price String
+  registration Boolean @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  feed Feeds @relation(fields: [feedId], references: [id])
+  answer SonminsuAnswers @relation(fields: [answerId], references: [id])
+
+  bucketItems BucketItems[]
+  image Files?
+}
+
+model Buckets {
+  id Int @id @default(autoincrement())
+  ownerId Int @map("owner_id")
+  bucketName String @map("bucket_name")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  owner UserMeta @relation(fields: [ownerId], references: [userId])
+
+  items BucketItems[]
+}
+
+model BucketItems {
+  bucketId Int @map("bucket_id")
+  itemId Int @map("item_id")
+
+  bucket Buckets @relation(fields: [bucketId], references: [id])
+  item SonminsuItems @relation(fields: [itemId], references: [id])
+
+  @@id([bucketId,itemId])
+}
+
+model Files {
+  id Int @id @default(autoincrement())
+  url String
+  userId Int @default(0) @unique @map("user_id")
+  fandomId Int @default(0) @unique @map("fandom_id")
+  feedId Int @default(0) @map("feed_id")
+  sonminsuRequestId Int @default(0) @unique @map("sonminsu_request_id")
+  sonminsuItemId Int @default(0) @unique @map("sonminsu_item_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user UserMeta @relation(fields: [userId], references: [userId])
+  fandom Fandoms @relation(fields: [fandomId], references: [id])
+  feed Feeds @relation(fields: [feedId], references: [id])
+  sonminsuRequest SonminsuRequests @relation(fields: [sonminsuRequestId], references: [id])
+  sonminsuItem SonminsuItems @relation(fields: [sonminsuItemId], references: [id])
+}
