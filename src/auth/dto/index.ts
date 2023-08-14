@@ -1,2 +1,2 @@
 export * from './create-auth.dto';
-export * from './validate-email.dto';
+export * from './verificate-code.dto';
