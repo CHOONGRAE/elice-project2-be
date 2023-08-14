@@ -8,7 +8,6 @@ import { EjsAdapter } from '@nestjs-modules/mailer/dist/adapters/ejs.adapter';
 @Module({
   imports: [
     MailModule.forRootAsync({
-      imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         transport: {
@@ -20,11 +19,11 @@ import { EjsAdapter } from '@nestjs-modules/mailer/dist/adapters/ejs.adapter';
           },
         },
         defaults: {
-          from: `"no-reply" ${configService.get('MAILER_EMAIL')}`,
+          from: `No Reply <${configService.get('MAILER_EMAIL')}>`,
         },
         preview: true,
         template: {
-          dir: __dirname + '/templates',
+          dir: __dirname + '/templates/',
           adapter: new EjsAdapter(),
           options: {
             strict: true,
