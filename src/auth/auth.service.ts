@@ -68,7 +68,7 @@ export class AuthService {
       where: { email },
     });
 
-    if (exUser.length) {
+    if (!exUser.length) {
       throw new UnauthorizedException();
     }
 
@@ -91,7 +91,7 @@ export class AuthService {
       { expiresIn: EXPIRE_REFESH_TOKEN * 2 },
     );
 
-    await this.redis.set(refreshKey, refreshToken);
+    await this.redis.set(refreshKey, refreshToken, EXPIRE_REFESH_TOKEN * 2);
 
     return { access_token: accessToken };
   }

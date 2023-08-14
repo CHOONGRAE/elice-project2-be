@@ -9,7 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { VerificateCodeDto } from './dto';
+import { SigninDto, VerificateCodeDto } from './dto';
 
 @Controller('auth')
 export class AuthController {
@@ -23,5 +23,10 @@ export class AuthController {
   @Post('verificationCode')
   async confimVerificationCode(@Body() verificateCodeDto: VerificateCodeDto) {
     return await this.authService.confirmVerificationCode(verificateCodeDto);
+  }
+
+  @Post('signin')
+  async signin(@Body() signinDto: SigninDto) {
+    return await this.authService.signin(signinDto);
   }
 }
