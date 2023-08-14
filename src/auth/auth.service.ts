@@ -1,29 +1,35 @@
 import { Injectable } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { RedisService } from 'src/redis/redis.service';
+import { ValidateEmailDto } from './dto/validate-email.dto';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
+  ) {}
 
-  async authenticateEmail(email: string) {
-    return email;
+  async validateEmail(email: string) {
+    const exUser = await this.prisma.users.findMany({
+      where: { email },
+    });
+
+    if (exUser.length) {
+      return exUser;
+    }
+
+    await this.redis.set(email, 'test2');
+    return await this.redis.get(email);
   }
 
-  findAll() {
-    return `This action returns all auth`;
-  }
+  async validate(validateEmail: ValidateEmailDto) {
+    const { email, certificationString } = validateEmail;
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
+    const isValidate = (await this.redis.get(email)) === certificationString;
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+    if (!isValidate) {
+      return false;
+    }
   }
 }
