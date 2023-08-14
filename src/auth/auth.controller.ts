@@ -9,19 +9,19 @@ import {
   Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { ValidateEmailDto } from './dto/validate-email.dto';
+import { VerificateCodeDto } from './dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Get('validate')
+  @Get('validateEmail')
   async validateEmail(@Query('email') email: string) {
     return await this.authService.validateEmail(email);
   }
 
-  @Post('validate')
-  async validate(@Body() validateEmail: ValidateEmailDto) {
-    return await this.authService.validate(validateEmail);
+  @Post('verificateCode')
+  async verificateCod(@Body() verificateCodeDto: VerificateCodeDto) {
+    return await this.authService.confirmVerificationCode(verificateCodeDto);
   }
 }
