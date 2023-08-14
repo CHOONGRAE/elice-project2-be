@@ -1,5 +1,5 @@
 import { ApiProperty, PickType } from '@nestjs/swagger';
-import { AuthEntity } from '../entities/auth.entity';
+import { AuthEntity } from '../entities';
 
 export class VerificateCodeDto extends PickType(AuthEntity, ['email']) {
   @ApiProperty()
