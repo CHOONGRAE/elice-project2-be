@@ -7,8 +7,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class AuthService {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
+  async authenticateEmail(email: string) {
+    return email;
   }
 
   findAll() {
