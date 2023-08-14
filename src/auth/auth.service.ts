@@ -3,6 +3,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
 import { CreateAuthDto, SigninDto, VerificateCodeDto } from './dto';
 import { MailerService } from 'src/mailer/mailer.service';
+import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 const ALPHABET = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
@@ -21,6 +22,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
     private readonly mailer: MailerService,
+    private readonly jwt: JwtService,
   ) {}
 
   async getVerificationCode(email: string) {
