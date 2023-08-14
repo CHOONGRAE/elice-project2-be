@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
 import { CreateAuthDto, SigninDto, VerificateCodeDto } from './dto';
@@ -15,6 +15,8 @@ const createRandomNumber = () =>
   String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
 
 const createCode = () => `${createPrefix()}-${createRandomNumber()}`;
+
+const EXPIRE_REFESH_TOKEN = 1000 * 60 * 60 * 24 * 7;
 
 @Injectable()
 export class AuthService {
@@ -67,17 +69,30 @@ export class AuthService {
     });
 
     if (exUser.length) {
-      return false;
+      throw new UnauthorizedException();
     }
 
-    const { password: hashedPassword } = exUser[0];
+    const { id, password: hashedPassword } = exUser[0];
 
     const isValidated = await bcrypt.compare(password, hashedPassword);
 
     if (!isValidated) {
-      return false;
+      throw new UnauthorizedException();
     }
 
-    return true;
+    const refreshKey = await bcrypt.hash(email, 10);
+
+    const payload = { sub: id, refreshKey };
+
+    const accessToken = await this.jwt.signAsync(payload);
+
+    const refreshToken = await this.jwt.signAsync(
+      { sub: id },
+      { expiresIn: EXPIRE_REFESH_TOKEN * 2 },
+    );
+
+    await this.redis.set(refreshKey, refreshToken);
+
+    return { access_token: accessToken };
   }
 }
