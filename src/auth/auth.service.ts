@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
-import { VerificateCodeDto } from './dto';
+import { CreateAuthDto, SigninDto, VerificateCodeDto } from './dto';
 import { MailerService } from 'src/mailer/mailer.service';
 import * as bcrypt from 'bcrypt';
 
@@ -53,6 +53,28 @@ export class AuthService {
     }
 
     await this.redis.delete(email);
+
+    return true;
+  }
+
+  async signup({ email, password }: CreateAuthDto) {}
+
+  async signin({ email, password }: SigninDto) {
+    const exUser = await this.prisma.users.findMany({
+      where: { email },
+    });
+
+    if (exUser.length) {
+      return false;
+    }
+
+    const { password: hashedPassword } = exUser[0];
+
+    const isValidated = await bcrypt.compare(password, hashedPassword);
+
+    if (!isValidated) {
+      return false;
+    }
 
     return true;
   }
