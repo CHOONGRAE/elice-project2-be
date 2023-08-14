@@ -23,7 +23,7 @@ export class AuthService {
     private readonly mailer: MailerService,
   ) {}
 
-  async validateEmail(email: string) {
+  async getVerificationCode(email: string) {
     const exUser = await this.prisma.users.findMany({
       where: { email },
     });
@@ -32,25 +32,23 @@ export class AuthService {
       return false;
     }
 
-    const verificateCode = createCode();
+    const verificationCode = createCode();
 
-    const hashedCode = await bcrypt.hash(verificateCode, 10);
+    const hashedCode = await bcrypt.hash(verificationCode, 10);
 
-    await this.mailer.sendMail(email, verificateCode);
+    await this.mailer.sendMail(email, verificationCode);
 
     await this.redis.set(email, hashedCode);
 
     return true;
   }
 
-  async confirmVerificationCode(verificateCode: VerificateCodeDto) {
-    const { email, code } = verificateCode;
-
+  async confirmVerificationCode({ email, code }: VerificateCodeDto) {
     const hashedCode = await this.redis.get(email);
 
-    const isVerificate = await bcrypt.compare(code, hashedCode as string);
+    const isVerificated = await bcrypt.compare(code, hashedCode as string);
 
-    if (!isVerificate) {
+    if (!isVerificated) {
       return false;
     }
 
