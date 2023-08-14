@@ -15,13 +15,13 @@ import { VerificateCodeDto } from './dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Get('validateEmail')
-  async validateEmail(@Query('email') email: string) {
-    return await this.authService.validateEmail(email);
+  @Get('verificationCode')
+  async getVerificationCode(@Query('email') email: string) {
+    return await this.authService.getVerificationCode(email);
   }
 
-  @Post('verificateCode')
-  async verificateCod(@Body() verificateCodeDto: VerificateCodeDto) {
+  @Post('verificationCode')
+  async confimVerificationCode(@Body() verificateCodeDto: VerificateCodeDto) {
     return await this.authService.confirmVerificationCode(verificateCodeDto);
   }
 }
