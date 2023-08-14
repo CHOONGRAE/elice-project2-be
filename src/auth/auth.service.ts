@@ -61,7 +61,27 @@ export class AuthService {
     return true;
   }
 
-  async signup({ email, password }: CreateAuthDto) {}
+  async signup({
+    email,
+    password,
+    userName,
+    birthDate,
+    phoneNumber,
+  }: CreateAuthDto) {
+    return await this.prisma.users.create({
+      data: {
+        email,
+        password,
+        userMeta: {
+          create: {
+            userName,
+            birthDate,
+            phoneNumber,
+          },
+        },
+      },
+    });
+  }
 
   async signin({ email, password }: SigninDto) {
     const exUser = await this.prisma.users.findMany({
