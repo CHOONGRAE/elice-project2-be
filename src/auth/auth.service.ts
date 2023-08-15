@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
 import {
@@ -23,6 +27,8 @@ const createCode = () => `${createPrefix()}-${createRandomNumber()}`;
 
 const EXPIRE_REFESH_TOKEN = 1000 * 60 * 60 * 24 * 7;
 
+const EXPIRE_VEIRIFICATION_CODE = 1000 * 60 * 5;
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -38,7 +44,7 @@ export class AuthService {
     });
 
     if (exUser.length) {
-      return false;
+      throw new ConflictException();
     }
 
     const verificationCode = createCode();
@@ -47,9 +53,7 @@ export class AuthService {
 
     await this.mailer.sendMail(email, verificationCode);
 
-    await this.redis.set(email, hashedCode);
-
-    return true;
+    await this.redis.set(email, hashedCode, EXPIRE_VEIRIFICATION_CODE);
   }
 
   async confirmVerificationCode({ email, code }: ConfirmVerificationCodeDto) {
@@ -58,12 +62,10 @@ export class AuthService {
     const isVerificated = await bcrypt.compare(code, hashedCode as string);
 
     if (!isVerificated) {
-      return false;
+      throw new ConflictException();
     }
 
     await this.redis.delete(email);
-
-    return true;
   }
 
   async signup({
