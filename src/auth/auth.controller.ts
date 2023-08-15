@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, HttpCode } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
   CreateAuthDto,
@@ -23,6 +14,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Get('verificationCode')
+  @HttpCode(204)
   @ApiOperation({
     summary: '메일 인증 번호 생성 API',
     description: '메일로 인증 번호를 전송',
@@ -34,6 +26,7 @@ export class AuthController {
   }
 
   @Post('verificationCode')
+  @HttpCode(200)
   @ApiOperation({
     summary: '메일 인증 번호 확인 API',
     description: '메일로 전송된 인증 번호가 일치하는지 확인',
@@ -47,6 +40,7 @@ export class AuthController {
   }
 
   @Post('signin')
+  @HttpCode(200)
   @ApiOperation({
     summary: '로그인 API',
     description: '로그인',
