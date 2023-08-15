@@ -6,7 +6,7 @@ import { ValidationPipe } from '@nestjs/common';
 
 const validationPipeConifg = {
   whitelist: true,
-  forbidNonWhitelisted: true,
+  // forbidNonWhitelisted: true,
   errorHttpStatusCode: 400,
 };
 
@@ -20,8 +20,8 @@ async function bootstrap() {
 
   setupSwagger(app);
 
-  await app.listen(5000);
-
   app.useGlobalPipes(validationPipe);
+
+  await app.listen(5000);
 }
 bootstrap();
