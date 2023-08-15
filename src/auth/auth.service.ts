@@ -1,7 +1,12 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
-import { CreateAuthDto, SigninDto, VerificateCodeDto } from './dto';
+import {
+  CreateAuthDto,
+  SendVerificationCodeDto,
+  SigninDto,
+  ConfirmVerificationCodeDto,
+} from './dto';
 import { MailerService } from 'src/mailer/mailer.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -27,7 +32,7 @@ export class AuthService {
     private readonly jwt: JwtService,
   ) {}
 
-  async getVerificationCode(email: string) {
+  async sendVerificationCode({ email }: SendVerificationCodeDto) {
     const exUser = await this.prisma.users.findMany({
       where: { email },
     });
@@ -47,7 +52,7 @@ export class AuthService {
     return true;
   }
 
-  async confirmVerificationCode({ email, code }: VerificateCodeDto) {
+  async confirmVerificationCode({ email, code }: ConfirmVerificationCodeDto) {
     const hashedCode = await this.redis.get(email);
 
     const isVerificated = await bcrypt.compare(code, hashedCode as string);

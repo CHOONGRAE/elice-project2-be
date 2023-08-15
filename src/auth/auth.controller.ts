@@ -9,7 +9,12 @@ import {
   Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto, SigninDto, VerificateCodeDto } from './dto';
+import {
+  CreateAuthDto,
+  SigninDto,
+  ConfirmVerificationCodeDto,
+  SendVerificationCodeDto,
+} from './dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @Controller('auth')
@@ -22,8 +27,10 @@ export class AuthController {
     summary: '메일 인증 번호 생성 API',
     description: '메일로 인증 번호를 전송',
   })
-  async getVerificationCode(@Query('email') email: string) {
-    return await this.authService.getVerificationCode(email);
+  async sendVerificationCode(
+    @Query() sendVerificationCodeDto: SendVerificationCodeDto,
+  ) {
+    return await this.authService.sendVerificationCode(sendVerificationCodeDto);
   }
 
   @Post('verificationCode')
@@ -31,8 +38,12 @@ export class AuthController {
     summary: '메일 인증 번호 확인 API',
     description: '메일로 전송된 인증 번호가 일치하는지 확인',
   })
-  async confimVerificationCode(@Body() verificateCodeDto: VerificateCodeDto) {
-    return await this.authService.confirmVerificationCode(verificateCodeDto);
+  async confimVerificationCode(
+    @Body() confirmVerificationCodeDto: ConfirmVerificationCodeDto,
+  ) {
+    return await this.authService.confirmVerificationCode(
+      confirmVerificationCodeDto,
+    );
   }
 
   @Post('signin')
