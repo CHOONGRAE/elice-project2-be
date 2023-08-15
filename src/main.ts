@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { setupSwagger } from './utils/swagger';
+import { setupSwagger } from './setups/swagger';
 import { PrismaService } from './prisma/prisma.service';
 import { ValidationPipe } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
