@@ -3,6 +3,7 @@ import { MailerModule as MailModule } from '@nestjs-modules/mailer';
 import { MailerService } from './mailer.service';
 import { ConfigService } from '@nestjs/config';
 import { EjsAdapter } from '@nestjs-modules/mailer/dist/adapters/ejs.adapter';
+import { join } from 'path';
 
 @Global()
 @Module({
@@ -11,8 +12,7 @@ import { EjsAdapter } from '@nestjs-modules/mailer/dist/adapters/ejs.adapter';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         transport: {
-          host: configService.get('MAILER_HOST'),
-          port: 587,
+          service: configService.get('MAILER_SERVICE'),
           auth: {
             user: configService.get('MAILER_EMAIL'),
             pass: configService.get('MAILER_PASSWORD'),
@@ -23,7 +23,7 @@ import { EjsAdapter } from '@nestjs-modules/mailer/dist/adapters/ejs.adapter';
         },
         preview: true,
         template: {
-          dir: __dirname + '/templates',
+          dir: join(__dirname, 'templates'),
           adapter: new EjsAdapter(),
           options: {
             strict: true,

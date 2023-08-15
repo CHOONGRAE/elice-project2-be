@@ -10,8 +10,8 @@ export class RedisService {
     return await this.cache.get(key);
   }
 
-  async set(key: string, value: any) {
-    await this.cache.set(key, value);
+  async set(key: string, value: any, ttl?: number) {
+    await this.cache.set(key, value, ttl);
   }
 
   async reset() {
