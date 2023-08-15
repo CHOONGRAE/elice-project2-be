@@ -57,9 +57,9 @@ export class AuthService {
   }
 
   async confirmVerificationCode({ email, code }: ConfirmVerificationCodeDto) {
-    const hashedCode = await this.redis.get(email);
+    const hashedCode = (await this.redis.get(email)) as string;
 
-    const isVerificated = await bcrypt.compare(code, hashedCode as string);
+    const isVerificated = await bcrypt.compare(code, hashedCode);
 
     if (!isVerificated) {
       throw new ConflictException();
@@ -68,17 +68,15 @@ export class AuthService {
     await this.redis.delete(email);
   }
 
-  async signup({
-    email,
-    password,
-    userName,
-    birthDate,
-    phoneNumber,
-  }: CreateAuthDto) {
+  async signup(createAuthDto: CreateAuthDto) {
+    const { email, password, userName, birthDate, phoneNumber } = createAuthDto;
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     return await this.prisma.users.create({
       data: {
         email,
-        password,
+        password: hashedPassword,
         userMeta: {
           create: {
             userName,
@@ -107,19 +105,49 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
+    return await this.createTokens(id, email);
+  }
+
+  async refreshToken(rt: string) {
+    const trimedRt = rt.replace(/bearer/i, '').trim();
+
+    try {
+      const {
+        id,
+        email,
+        key,
+        exp,
+      }: { id: number; email: string; key: string; exp: number } =
+        await this.jwt.verifyAsync(trimedRt);
+
+      const checker = (await this.redis.get(key)) as string;
+
+      if (
+        exp * 1000 < new Date().getTime() ||
+        !checker ||
+        checker !== trimedRt
+      ) {
+        throw new UnauthorizedException();
+      }
+      await this.redis.delete(key);
+      return await this.createTokens(id, email);
+    } catch (e) {
+      throw new UnauthorizedException();
+    }
+  }
+
+  async createTokens(id: number, email: string) {
     const refreshKey = await bcrypt.hash(email, 10);
 
-    const payload = { sub: id, refreshKey };
-
-    const accessToken = await this.jwt.signAsync(payload);
+    const accessToken = await this.jwt.signAsync({ sub: id });
 
     const refreshToken = await this.jwt.signAsync(
-      { sub: id },
-      { expiresIn: EXPIRE_REFESH_TOKEN * 2 },
+      { sub: id, email, key: refreshKey },
+      { expiresIn: (EXPIRE_REFESH_TOKEN * 2) / 1000 },
     );
 
     await this.redis.set(refreshKey, refreshToken, EXPIRE_REFESH_TOKEN * 2);
 
-    return { access_token: accessToken };
+    return { at: `Bearer ${accessToken}`, rt: `Bearer ${refreshToken}` };
   }
 }
