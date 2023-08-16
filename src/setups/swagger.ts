@@ -8,12 +8,12 @@ export const setupSwagger = (app: INestApplication) => {
     .setVersion('1.0.0')
     .addBearerAuth(
       {
-        type: 'http',
+        type: 'apiKey',
         scheme: 'bearer',
-        name: 'jwt',
+        name: 'Authorization',
         in: 'header',
       },
-      'rt',
+      'Authorization',
     )
     .build();
 
