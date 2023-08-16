@@ -16,7 +16,7 @@ import {
   ConfirmVerificationCodeDto,
   SendVerificationCodeDto,
 } from './dto';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 
 @Controller('auth')
@@ -30,6 +30,18 @@ export class AuthController {
     summary: '메일 인증 번호 생성 API',
     description: '메일로 인증 번호를 전송',
   })
+  @ApiResponse({
+    status: 204,
+    description: '요청 성공',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request - value 확인바람',
+  })
+  @ApiResponse({
+    status: 409,
+    description: '이미 가입한 email',
+  })
   async sendVerificationCode(
     @Query() sendVerificationCodeDto: SendVerificationCodeDto,
   ) {
@@ -41,6 +53,18 @@ export class AuthController {
   @ApiOperation({
     summary: '메일 인증 번호 확인 API',
     description: '메일로 전송된 인증 번호가 일치하는지 확인',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '요청 성공',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request - value 확인바람',
+  })
+  @ApiResponse({
+    status: 409,
+    description: '인증 번호 불일치',
   })
   async confimVerificationCode(
     @Body() confirmVerificationCodeDto: ConfirmVerificationCodeDto,
@@ -55,6 +79,14 @@ export class AuthController {
     summary: '회원가입 API',
     description: '회원가입',
   })
+  @ApiResponse({
+    status: 201,
+    description: '회원 가입 성공',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request - value 확인바람',
+  })
   async signup(@Body() signupDto: CreateAuthDto) {
     return await this.authService.signup(signupDto);
   }
@@ -65,6 +97,14 @@ export class AuthController {
     summary: '로그인 API',
     description: '로그인',
   })
+  @ApiResponse({
+    status: 204,
+    description: '로그인 성공',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '로그인 실패, 아이디 비밀번호 확인 바람',
+  })
   async signin(@Body() signinDto: SigninDto, @Res() res: Response) {
     const { at, rt } = await this.authService.signin(signinDto);
     res.setHeader('Authorization', at);
@@ -73,9 +113,18 @@ export class AuthController {
   }
 
   @Get('autoSignin')
+  @HttpCode(204)
   @ApiOperation({
     summary: '자동 로그인',
     description: '앱 구동시 토큰으로 로그인',
+  })
+  @ApiResponse({
+    status: 204,
+    description: '로그인 성공',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '로그인 실패 토큰 만료',
   })
   async autoSignin(@Req() req: Request, @Res() res: Response) {
     await this.checkToken(req, res);
@@ -86,6 +135,14 @@ export class AuthController {
   @ApiOperation({
     summary: 'jwt token 리프레시 API',
     description: 'jwt token 리프레시 하기',
+  })
+  @ApiResponse({
+    status: 204,
+    description: '갱신 성공',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '토큰 만료',
   })
   async refreshToken(@Req() req: Request, @Res() res: Response) {
     await this.checkToken(req, res);
