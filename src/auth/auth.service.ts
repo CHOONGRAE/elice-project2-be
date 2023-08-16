@@ -113,14 +113,15 @@ export class AuthService {
 
     try {
       const {
-        id,
+        sub,
         email,
         key,
         exp,
-      }: { id: number; email: string; key: string; exp: number } =
+      }: { sub: number; email: string; key: string; exp: number } =
         await this.jwt.verifyAsync(trimedRt);
 
       const checker = (await this.redis.get(key)) as string;
+      console.log(checker, sub, email, key, exp);
 
       if (
         exp * 1000 < new Date().getTime() ||
@@ -130,13 +131,13 @@ export class AuthService {
         throw new UnauthorizedException();
       }
       await this.redis.delete(key);
-      return await this.createTokens(id, email);
+      return await this.createTokens(sub, email);
     } catch (e) {
       throw new UnauthorizedException();
     }
   }
 
-  async createTokens(id: number, email: string) {
+  private async createTokens(id: number, email: string) {
     const refreshKey = await bcrypt.hash(email, 10);
 
     const accessToken = await this.jwt.signAsync({ sub: id });

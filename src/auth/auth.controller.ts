@@ -8,6 +8,7 @@ import {
   Res,
   Req,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
@@ -18,6 +19,7 @@ import {
 } from './dto';
 import { ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
 import { Request, Response } from 'express';
+import { AuthGuard } from './auth.guard';
 
 @Controller('auth')
 @ApiTags('Auth API')
@@ -148,7 +150,7 @@ export class AuthController {
     await this.checkToken(req, res);
   }
 
-  async checkToken(req: Request, res: Response) {
+  private async checkToken(req: Request, res: Response) {
     const { rt } = req.cookies;
 
     if (!rt) throw new UnauthorizedException();
