@@ -18,5 +18,6 @@ const jwtModule = JwtModule.registerAsync({
   controllers: [AuthController],
   providers: [AuthService],
   imports: [PrismaModule, jwtModule],
+  exports: [jwtModule],
 })
 export class AuthModule {}
