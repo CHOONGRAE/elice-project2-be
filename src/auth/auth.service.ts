@@ -73,7 +73,7 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    return await this.prisma.users.create({
+    const { id } = await this.prisma.users.create({
       data: {
         email,
         password: hashedPassword,
@@ -86,6 +86,8 @@ export class AuthService {
         },
       },
     });
+
+    return await this.createTokens(id, email);
   }
 
   async signin({ email, password }: SigninDto) {
@@ -121,7 +123,6 @@ export class AuthService {
         await this.jwt.verifyAsync(trimedRt);
 
       const checker = (await this.redis.get(key)) as string;
-      console.log(checker, sub, email, key, exp);
 
       if (
         exp * 1000 < new Date().getTime() ||
@@ -130,7 +131,9 @@ export class AuthService {
       ) {
         throw new UnauthorizedException();
       }
+
       await this.redis.delete(key);
+
       return await this.createTokens(sub, email);
     } catch (e) {
       throw new UnauthorizedException();
