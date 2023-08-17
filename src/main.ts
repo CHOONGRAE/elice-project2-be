@@ -1,9 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { setupSwagger } from './setups/swagger';
-import { PrismaService } from './prisma/prisma.service';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
+import { PrismaService } from './data-access/prisma/prisma.service';
 
 const validationPipeConifg = {
   whitelist: true,

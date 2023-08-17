@@ -1,5 +1,5 @@
 import { ApiProperty, OmitType } from '@nestjs/swagger';
-import { AuthEntity } from '../entities';
+import { AuthEntity } from '@entities';
 import { IsEmail, IsNotEmpty, IsString, Length } from 'class-validator';
 
 export class SigninDto extends OmitType(AuthEntity, ['id'] as const) {

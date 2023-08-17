@@ -3,14 +3,14 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { RedisService } from 'src/redis/redis.service';
+import { PrismaService } from '@prisma/prisma.service';
+import { RedisService } from '@redis/redis.service';
 import {
   CreateAuthDto,
   SendVerificationCodeDto,
   SigninDto,
   ConfirmVerificationCodeDto,
-} from './dto';
+} from '@dto/authDto';
 import { MailerService } from 'src/mailer/mailer.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';

@@ -1,5 +1,5 @@
 import { ApiProperty, IntersectionType, OmitType } from '@nestjs/swagger';
-import { AuthEntity, UserEntity } from '../entities';
+import { AuthEntity, UserEntity } from '@entities';
 import {
   IsEmail,
   IsNotEmpty,
