@@ -1,8 +1,8 @@
 import { ApiProperty, PickType } from '@nestjs/swagger';
-import { AuthEntity } from '../entities';
+import { AuthEntity } from '@entities';
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
-export class ConfirmVerificationCodeDto extends PickType(AuthEntity, [
+export class SendVerificationCodeDto extends PickType(AuthEntity, [
   'email',
 ] as const) {
   @IsNotEmpty()
@@ -10,9 +10,4 @@ export class ConfirmVerificationCodeDto extends PickType(AuthEntity, [
   @IsEmail()
   @ApiProperty()
   email: string;
-
-  @IsNotEmpty()
-  @IsString()
-  @ApiProperty()
-  code: string;
 }

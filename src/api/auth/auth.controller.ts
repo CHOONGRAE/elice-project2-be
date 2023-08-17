@@ -8,7 +8,6 @@ import {
   Res,
   Req,
   UnauthorizedException,
-  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
@@ -16,17 +15,19 @@ import {
   SigninDto,
   ConfirmVerificationCodeDto,
   SendVerificationCodeDto,
-} from './dto';
+} from '@dto/authDto';
 import { ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
 import { Request, Response } from 'express';
-import { AuthGuard } from './auth.guard';
 
-@Controller('auth')
+@Controller({
+  path: 'auth',
+  version: '1',
+})
 @ApiTags('Auth API')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Get('verificationCode')
+  @Get('verification-code')
   @HttpCode(204)
   @ApiOperation({
     summary: '메일 인증 번호 생성 API',
@@ -50,7 +51,7 @@ export class AuthController {
     return await this.authService.sendVerificationCode(sendVerificationCodeDto);
   }
 
-  @Post('verificationCode')
+  @Post('verification-code')
   @HttpCode(200)
   @ApiOperation({
     summary: '메일 인증 번호 확인 API',
@@ -76,7 +77,7 @@ export class AuthController {
     );
   }
 
-  @Post('signup')
+  @Post('sign-up')
   @ApiOperation({
     summary: '회원가입 API',
     description: '회원가입',
@@ -94,7 +95,7 @@ export class AuthController {
     return await this.sendToken(res, at, rt);
   }
 
-  @Post('signin')
+  @Post('sign-in')
   @HttpCode(204)
   @ApiOperation({
     summary: '로그인 API',
@@ -113,7 +114,7 @@ export class AuthController {
     return this.sendToken(res, at, rt);
   }
 
-  @Get('autoSignin')
+  @Get('auto-sign-in')
   @HttpCode(204)
   @ApiOperation({
     summary: '자동 로그인',
@@ -131,7 +132,7 @@ export class AuthController {
     return await this.checkToken(req, res);
   }
 
-  @Get('refreshToken')
+  @Get('refresh-token')
   @HttpCode(204)
   @ApiOperation({
     summary: 'jwt token 리프레시 API',
