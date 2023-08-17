@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
 import {
@@ -23,6 +27,8 @@ const createCode = () => `${createPrefix()}-${createRandomNumber()}`;
 
 const EXPIRE_REFESH_TOKEN = 1000 * 60 * 60 * 24 * 7;
 
+const EXPIRE_VEIRIFICATION_CODE = 1000 * 60 * 5;
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -38,7 +44,7 @@ export class AuthService {
     });
 
     if (exUser.length) {
-      return false;
+      throw new ConflictException();
     }
 
     const verificationCode = createCode();
@@ -47,36 +53,30 @@ export class AuthService {
 
     await this.mailer.sendMail(email, verificationCode);
 
-    await this.redis.set(email, hashedCode);
-
-    return true;
+    await this.redis.set(email, hashedCode, EXPIRE_VEIRIFICATION_CODE);
   }
 
   async confirmVerificationCode({ email, code }: ConfirmVerificationCodeDto) {
-    const hashedCode = await this.redis.get(email);
+    const hashedCode = (await this.redis.get(email)) as string;
 
-    const isVerificated = await bcrypt.compare(code, hashedCode as string);
+    const isVerificated = await bcrypt.compare(code, hashedCode);
 
     if (!isVerificated) {
-      return false;
+      throw new ConflictException();
     }
 
     await this.redis.delete(email);
-
-    return true;
   }
 
-  async signup({
-    email,
-    password,
-    userName,
-    birthDate,
-    phoneNumber,
-  }: CreateAuthDto) {
-    return await this.prisma.users.create({
+  async signup(createAuthDto: CreateAuthDto) {
+    const { email, password, userName, birthDate, phoneNumber } = createAuthDto;
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const { id } = await this.prisma.users.create({
       data: {
         email,
-        password,
+        password: hashedPassword,
         userMeta: {
           create: {
             userName,
@@ -86,6 +86,8 @@ export class AuthService {
         },
       },
     });
+
+    return await this.createTokens(id, email);
   }
 
   async signin({ email, password }: SigninDto) {
@@ -105,19 +107,51 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
+    return await this.createTokens(id, email);
+  }
+
+  async refreshToken(rt: string) {
+    const trimedRt = rt.replace(/bearer/i, '').trim();
+
+    try {
+      const {
+        sub,
+        email,
+        key,
+        exp,
+      }: { sub: number; email: string; key: string; exp: number } =
+        await this.jwt.verifyAsync(trimedRt);
+
+      const checker = (await this.redis.get(key)) as string;
+
+      if (
+        exp * 1000 < new Date().getTime() ||
+        !checker ||
+        checker !== trimedRt
+      ) {
+        throw new UnauthorizedException();
+      }
+
+      await this.redis.delete(key);
+
+      return await this.createTokens(sub, email);
+    } catch (e) {
+      throw new UnauthorizedException();
+    }
+  }
+
+  private async createTokens(id: number, email: string) {
     const refreshKey = await bcrypt.hash(email, 10);
 
-    const payload = { sub: id, refreshKey };
-
-    const accessToken = await this.jwt.signAsync(payload);
+    const accessToken = await this.jwt.signAsync({ sub: id });
 
     const refreshToken = await this.jwt.signAsync(
-      { sub: id },
-      { expiresIn: EXPIRE_REFESH_TOKEN * 2 },
+      { sub: id, email, key: refreshKey },
+      { expiresIn: (EXPIRE_REFESH_TOKEN * 2) / 1000 },
     );
 
     await this.redis.set(refreshKey, refreshToken, EXPIRE_REFESH_TOKEN * 2);
 
-    return { access_token: accessToken };
+    return { at: `Bearer ${accessToken}`, rt: `Bearer ${refreshToken}` };
   }
 }

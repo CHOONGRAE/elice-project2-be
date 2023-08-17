@@ -14,8 +14,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         store: await redisStore({
           socket: {
             host: configService.get('REDIS_HOST'),
-            port: parseInt(configService.get('REDIS_PORT') ?? '6397'),
+            port: parseInt(configService.get('REDIS_PORT') ?? '6379'),
           },
+          password: configService.get('REDIS_PASSWORD'),
         }),
         ttl: 0,
       }),

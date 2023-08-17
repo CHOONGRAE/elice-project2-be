@@ -11,12 +11,13 @@ const jwtModule = JwtModule.registerAsync({
   useFactory: async (config: ConfigService) => ({
     global: true,
     secret: config.get('JWT_SECRET') || 'secret',
-    signOptions: { expiresIn: '15m' },
+    signOptions: { expiresIn: '1m' },
   }),
 });
 @Module({
   controllers: [AuthController],
   providers: [AuthService],
   imports: [PrismaModule, jwtModule],
+  exports: [jwtModule],
 })
 export class AuthModule {}
