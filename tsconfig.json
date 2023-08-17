@@ -22,7 +22,8 @@
       "@entities": ["src/entities"],
       "@prisma/*": ["src/data-access/prisma/*"],
       "@redis/*": ["src/data-access/redis/*"],
-      "@api/*": ["src/api/*"]
+      "@api/*": ["src/api/*"],
+      "@guards/*": ["src/guards/*"]
     }
   }
 }
