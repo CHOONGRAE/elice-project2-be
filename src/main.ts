@@ -22,9 +22,11 @@ async function bootstrap() {
     exposedHeaders: ['Authorization'],
     allowedHeaders: ['Origin', 'X-Request-With', 'Content-Type', 'Accept'],
   });
+
   app.use(cookieParser());
 
   const prismaService = app.get(PrismaService);
+
   await prismaService.enableShutdownHooks(app);
 
   setupSwagger(app);
