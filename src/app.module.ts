@@ -1,20 +1,11 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PrismaModule } from '@prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
-import { RedisModule } from '@redis/redis.module';
-import { MailerModule } from './mailer/mailer.module';
-import { AuthModule } from '@api/auth/auth.module';
+import { ApiModule } from '@api/api.module';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    PrismaModule,
-    RedisModule,
-    AuthModule,
-    MailerModule,
-  ],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), ApiModule],
   controllers: [AppController],
   providers: [AppService],
 })
