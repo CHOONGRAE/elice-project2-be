@@ -5,6 +5,7 @@ import { MailerModule } from '@mailer';
 import { AuthModule } from '@api/auth/auth.module';
 import { JwtModule } from '@jwt';
 import { FollowModule } from './follow/follow.module';
+import { FandomModule } from './fandom/fandom.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { FollowModule } from './follow/follow.module';
     MailerModule,
     JwtModule,
     FollowModule,
+    FandomModule,
   ],
 })
 export class ApiModule {}
