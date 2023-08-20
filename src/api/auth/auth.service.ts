@@ -39,7 +39,7 @@ export class AuthService {
   ) {}
 
   async sendVerificationCode({ email }: SendVerificationCodeDto) {
-    const exUser = await this.prisma.users.findMany({
+    const exUser = await this.prisma.auth.findMany({
       where: { email },
     });
 
@@ -73,11 +73,11 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const { id } = await this.prisma.users.create({
+    const { id } = await this.prisma.auth.create({
       data: {
         email,
         password: hashedPassword,
-        userMeta: {
+        user: {
           create: {
             userName,
             birthDate,
@@ -91,7 +91,7 @@ export class AuthService {
   }
 
   async signin({ email, password }: SigninDto) {
-    const exUser = await this.prisma.users.findMany({
+    const exUser = await this.prisma.auth.findMany({
       where: { email },
     });
 

@@ -1,6 +1,6 @@
-import { Users as AuthModel } from '@prisma/client';
+import { Auth } from '@prisma/client';
 
-export class AuthEntity implements AuthModel {
+export class AuthEntity implements Auth {
   id: number;
   email: string;
   password: string;
