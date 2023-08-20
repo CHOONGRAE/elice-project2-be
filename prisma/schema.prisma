@@ -38,6 +38,7 @@ model Users{
   sonminsuRequests SonminsuRequests[]
   sonminsuAnswers SonminsuAnswers[]
   buckets Buckets[]
+  readedMessages ReadedMessages[]
 }
 
 model Follows {
@@ -251,4 +252,12 @@ model MessageFiles {
   createdAt DateTime @default(now()) @map("created_at")
 
   message Messages? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+}
+
+model ReadedMessages {
+  userId Int @id @map("user_id")
+  fandomId Int @map("fandom_id")
+  messageId Int @map("message_id")
+
+  user Users @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }

@@ -213,6 +213,15 @@ CREATE TABLE "MessageFiles" (
     CONSTRAINT "MessageFiles_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "ReadedMessages" (
+    "user_id" INTEGER NOT NULL,
+    "fandom_id" INTEGER NOT NULL,
+    "message_id" INTEGER NOT NULL,
+
+    CONSTRAINT "ReadedMessages_pkey" PRIMARY KEY ("user_id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "HashTags_tag_key" ON "HashTags"("tag");
 
@@ -302,3 +311,6 @@ ALTER TABLE "BucketItems" ADD CONSTRAINT "BucketItems_item_id_fkey" FOREIGN KEY 
 
 -- AddForeignKey
 ALTER TABLE "MessageFiles" ADD CONSTRAINT "MessageFiles_message_id_fkey" FOREIGN KEY ("message_id") REFERENCES "Messages"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ReadedMessages" ADD CONSTRAINT "ReadedMessages_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
