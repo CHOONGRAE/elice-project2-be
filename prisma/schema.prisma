@@ -30,7 +30,7 @@ model Users{
   follower Follows[] @relation("Follower")
   follow Follows[] @relation("Follow")
   fandoms Fandoms[]
-  fandomAnnouncements FadomAnnouncements[]
+  fandomAnnouncements FandomAnnouncements[]
   subscribes Subscribes[]
   feeds Feeds[]
   likes Likes[]
@@ -59,7 +59,7 @@ model Fandoms {
   admin Users @relation(fields: [userId], references: [userId])
 
   rank FandomRanks?
-  announcements FadomAnnouncements[]
+  announcements FandomAnnouncements[]
   subscribes Subscribes[]
   feeds Feeds[]
 }
@@ -71,7 +71,7 @@ model FandomRanks {
   fandom Fandoms @relation(fields: [fandomId], references: [id], onDelete: Cascade)
 }
 
-model FadomAnnouncements {
+model FandomAnnouncements {
   id Int @id @default(autoincrement())
   fandomId Int? @map("fandom_id")
   userId Int? @map("user_id")

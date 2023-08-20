@@ -49,14 +49,14 @@ CREATE TABLE "FandomRanks" (
 );
 
 -- CreateTable
-CREATE TABLE "FadomAnnouncements" (
+CREATE TABLE "FandomAnnouncements" (
     "id" SERIAL NOT NULL,
     "fandom_id" INTEGER,
     "user_id" INTEGER,
     "content" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "FadomAnnouncements_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "FandomAnnouncements_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -232,10 +232,10 @@ ALTER TABLE "Fandoms" ADD CONSTRAINT "Fandoms_user_id_fkey" FOREIGN KEY ("user_i
 ALTER TABLE "FandomRanks" ADD CONSTRAINT "FandomRanks_fandom_id_fkey" FOREIGN KEY ("fandom_id") REFERENCES "Fandoms"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "FadomAnnouncements" ADD CONSTRAINT "FadomAnnouncements_fandom_id_fkey" FOREIGN KEY ("fandom_id") REFERENCES "Fandoms"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "FandomAnnouncements" ADD CONSTRAINT "FandomAnnouncements_fandom_id_fkey" FOREIGN KEY ("fandom_id") REFERENCES "Fandoms"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "FadomAnnouncements" ADD CONSTRAINT "FadomAnnouncements_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("user_id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "FandomAnnouncements" ADD CONSTRAINT "FandomAnnouncements_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("user_id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Subscribes" ADD CONSTRAINT "Subscribes_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
