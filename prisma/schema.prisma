@@ -38,6 +38,7 @@ model Users{
   sonminsuRequests SonminsuRequests[]
   sonminsuAnswers SonminsuAnswers[]
   buckets Buckets[]
+  messages Messages[]
   readedMessages ReadedMessages[]
 }
 
@@ -63,6 +64,7 @@ model Fandoms {
   announcements FandomAnnouncements[]
   subscribes Subscribes[]
   feeds Feeds[]
+  messages Messages[]
 }
 
 model FandomRanks {
@@ -236,11 +238,14 @@ model BucketItems {
 
 model Messages {
   id Int @id @default(autoincrement())
-  fandomId Int @map("fandom_id")
-  userId Int @map("user_id")
+  fandomId Int? @map("fandom_id")
+  userId Int? @map("user_id")
   content String
   createdAt DateTime @default(now()) @map("created_at")
   deletedAt DateTime @default(dbgenerated("('1970-01-01T00:00:00.000Z')")) @map("deleted_at")
+
+  fandom Fandoms? @relation(fields: [fandomId], references: [id], onDelete: SetNull)
+  author Users? @relation(fields: [userId], references: [userId], onDelete: SetNull)
 
   files MessageFiles[]
 }

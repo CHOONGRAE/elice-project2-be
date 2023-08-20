@@ -194,8 +194,8 @@ CREATE TABLE "BucketItems" (
 -- CreateTable
 CREATE TABLE "Messages" (
     "id" SERIAL NOT NULL,
-    "fandom_id" INTEGER NOT NULL,
-    "user_id" INTEGER NOT NULL,
+    "fandom_id" INTEGER,
+    "user_id" INTEGER,
     "content" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3) NOT NULL DEFAULT ('1970-01-01T00:00:00.000Z'),
@@ -308,6 +308,12 @@ ALTER TABLE "BucketItems" ADD CONSTRAINT "BucketItems_bucket_id_fkey" FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE "BucketItems" ADD CONSTRAINT "BucketItems_item_id_fkey" FOREIGN KEY ("item_id") REFERENCES "SonminsuItems"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Messages" ADD CONSTRAINT "Messages_fandom_id_fkey" FOREIGN KEY ("fandom_id") REFERENCES "Fandoms"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Messages" ADD CONSTRAINT "Messages_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("user_id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "MessageFiles" ADD CONSTRAINT "MessageFiles_message_id_fkey" FOREIGN KEY ("message_id") REFERENCES "Messages"("id") ON DELETE SET NULL ON UPDATE CASCADE;
