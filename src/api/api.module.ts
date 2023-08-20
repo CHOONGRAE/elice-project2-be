@@ -4,8 +4,16 @@ import { RedisModule } from '@redis/redis.module';
 import { MailerModule } from '@mailer';
 import { AuthModule } from '@api/auth/auth.module';
 import { JwtModule } from '@jwt';
+import { FollowModule } from './follow/follow.module';
 
 @Module({
-  imports: [AuthModule, PrismaModule, RedisModule, MailerModule, JwtModule],
+  imports: [
+    AuthModule,
+    PrismaModule,
+    RedisModule,
+    MailerModule,
+    JwtModule,
+    FollowModule,
+  ],
 })
 export class ApiModule {}
