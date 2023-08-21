@@ -63,12 +63,14 @@ export class FandomService {
         },
       },
       take: 4,
-      orderBy: {
-        rank: {
-          point: 'desc',
+      orderBy: [
+        {
+          rank: {
+            point: 'desc',
+          },
         },
-        createdAt: 'asc',
-      },
+        { createdAt: 'asc' },
+      ],
     });
 
     return result.map(
@@ -78,16 +80,16 @@ export class FandomService {
           fandomName,
           thumbnailImgUrl,
           _count: { subscribes: memberLength },
-          messages: [{ createdAt: lastChatTime }],
+          messages,
         },
         i,
       ) => ({
         id,
-        rank: i,
+        rank: i + 1,
         fandomName,
         thumbnailImgUrl,
         memberLength,
-        lastChatTime,
+        lastChatTime: messages[0]?.createdAt || null,
       }),
     );
   }
