@@ -8,45 +8,71 @@ export class FandomService {
   constructor(private readonly prisma: PrismaService) {}
 
   async createFandom(createFandomDto: CreateFandomDto) {
-    await this.prisma.fandoms.create({
+    const createdFandom = await this.prisma.fandoms.create({
       data: createFandomDto,
     });
+
+    return { data: createdFandom };
   }
 
   async updateFandom(fandomId: number, updateFandomDto: UpdateFandomDto) {
-    await this.prisma.fandoms.update({
+    const updatedFandom = await this.prisma.fandoms.update({
       where: {
         id: fandomId,
       },
       data: updateFandomDto,
     });
+
+    return { data: updatedFandom };
   }
 
   async deleteFandom(fandomId: number) {
-    await this.prisma.fandoms.delete({
+    const deletedFandom = await this.prisma.fandoms.delete({
       where: {
         id: fandomId,
       },
     });
+
+    return { data: deletedFandom };
   }
 
   async getFandoms() {
-    return { data: await this.makeSortedFandoms() };
+    const fandoms = await this.makeSortedFandoms();
+
+    return { data: fandoms };
   }
 
   async getHotFandoms() {
-    return { data: await this.makeSortedFandoms() };
+    const fandoms = await this.makeSortedFandoms(4);
+
+    return { data: fandoms };
   }
 
-  async getFandomsByUser() {
-    return 'test';
+  async getFandomsByUser(userId: number) {
+    const userFandoms = await this.prisma.fandoms.findMany({
+      include: {
+        subscribes: {
+          where: {
+            userId,
+          },
+        },
+      },
+    });
+
+    return { data: userFandoms };
   }
 
-  async getFandomsBySearch() {
-    return 'test';
+  async getFandomsBySearch(searchString: string) {
+    const searchResult = await this.prisma.fandoms.findMany({
+      where: {
+        fandomName: { contains: searchString },
+      },
+    });
+
+    return { data: searchResult };
   }
 
-  private async makeSortedFandoms() {
+  private async makeSortedFandoms(take = 10, skip = 0) {
     const result = await this.prisma.fandoms.findMany({
       include: {
         _count: {
@@ -62,7 +88,8 @@ export class FandomService {
           },
         },
       },
-      take: 4,
+      skip,
+      take,
       orderBy: [
         {
           rank: {
