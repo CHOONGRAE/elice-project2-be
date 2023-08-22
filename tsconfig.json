@@ -16,6 +16,16 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@dto/*": ["src/dto/*"],
+      "@entities": ["src/entities"],
+      "@prisma/*": ["src/data-access/prisma/*"],
+      "@redis/*": ["src/data-access/redis/*"],
+      "@mailer": ["src/mailer/mailer.module"],
+      "@jwt": ["src/jwt/jwt.module"],
+      "@api/*": ["src/api/*"],
+      "@guards/*": ["src/guards/*"]
+    }
   }
 }

@@ -1,0 +1,268 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Auth {
+  id Int @id @default(autoincrement()) 
+  email String
+  password String
+
+  user Users?
+}
+
+model Users{
+  userId Int @id @map("user_id")
+  userName String? @map("user_name")
+  nickName String? @map("nick_name")
+  introduction String?
+  profileImgUrl String? @map("profile_image_url")
+  birthDate String? @map("birth_date")
+  phoneNumber String? @map("phone_number")
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  auth Auth @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  follower Follows[] @relation("Follower")
+  follow Follows[] @relation("Follow")
+  fandoms Fandoms[]
+  fandomAnnouncements FandomAnnouncements[]
+  subscribes Subscribes[]
+  feeds Feeds[]
+  likes Likes[]
+  comments Comments[]
+  sonminsuRequests SonminsuRequests[]
+  sonminsuAnswers SonminsuAnswers[]
+  buckets Buckets[]
+  messages Messages[]
+  readedMessages ReadedMessages[]
+}
+
+model Follows {
+  userId Int @map("user_id")
+  followId Int @map("follow_id")
+  follower Users @relation("Follower", fields: [userId], references: [userId], onDelete: Cascade)
+  follow Users @relation("Follow", fields: [followId], references: [userId], onDelete: Cascade)
+
+  @@id([userId,followId])
+}
+
+model Fandoms {
+  id Int @id @default(autoincrement()) 
+  userId Int @map("user_id")
+  fandomName String @map("fandom_name")
+  thumbnailImgUrl String @map("thumbnail_image_url")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  admin Users @relation(fields: [userId], references: [userId])
+
+  rank FandomRanks?
+  announcements FandomAnnouncements[]
+  subscribes Subscribes[]
+  feeds Feeds[]
+  messages Messages[]
+}
+
+model FandomRanks {
+  fandomId Int @id @map("fandom_id")
+  point Int @default(0)
+
+  fandom Fandoms @relation(fields: [fandomId], references: [id], onDelete: Cascade)
+}
+
+model FandomAnnouncements {
+  id Int @id @default(autoincrement())
+  fandomId Int? @map("fandom_id")
+  userId Int? @map("user_id")
+  content String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  fandom Fandoms? @relation(fields: [fandomId], references: [id], onDelete: SetNull)
+  author Users? @relation(fields: [userId], references: [userId], onDelete: SetNull)
+}
+
+model Subscribes {
+  userId Int @map("user_id")
+  fandomId Int @map("fandom_id")
+  user Users @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  fandom Fandoms @relation(fields: [fandomId], references: [id], onDelete: Cascade)
+
+  @@id([userId,fandomId])
+}
+
+model Feeds {
+  id Int @id @default(autoincrement())
+  userId Int? @map("user_id")
+  fandomId Int? @map("fandom_id")
+  content String  
+  createdAt DateTime @default(now()) @map("created_at")
+  deletedAt DateTime @default(dbgenerated("('1970-01-01T00:00:00.000Z')")) @map("deleted_at")
+
+  author Users? @relation(fields: [userId], references: [userId], onDelete: SetNull)
+  fandoms Fandoms? @relation(fields: [fandomId], references: [id], onDelete: SetNull)
+
+  tags FeedHashTags[]
+  images FeedImages[]
+  likes Likes[]
+  comments Comments[]
+  sonminsuItems SonminsuItems[]
+}
+
+model HashTags {
+  id Int @id @default(autoincrement())
+  tag String @unique
+
+  feeds FeedHashTags[]
+}
+
+model FeedHashTags {
+  feedId Int @map("feed_id")
+  hashTagId Int @map("hashTag_id")
+
+  feed Feeds @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  hashTag HashTags @relation(fields: [hashTagId], references: [id], onDelete: Cascade)
+
+  @@id([feedId,hashTagId])
+}
+
+model FeedImages {
+  id Int @id @default(autoincrement())
+  feedId Int? @map("feed_id")
+  url String
+
+  feed Feeds? @relation(fields: [feedId], references: [id], onDelete: SetNull)
+}
+
+model Likes {
+  userId Int @map("user_id")
+  feedId Int @map("feed_id")
+  user Users @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  feed Feeds @relation(fields: [feedId], references: [id], onDelete: Cascade)
+
+  @@id([userId, feedId])
+}
+
+model Comments {
+  id Int @id @default(autoincrement())
+  feedId Int? @map("feed_id")
+  parentId Int? 
+  userId Int? @map("user_id")
+  content String
+  createdAt DateTime @default(now()) @map("created_at")
+  deletedAt DateTime @default(dbgenerated("('1970-01-01T00:00:00.000Z')")) @map("deleted_at")
+
+  feeds Feeds? @relation(fields: [feedId], references: [id], onDelete: SetNull)
+  parent Comments? @relation("replies", fields: [parentId], references: [id])
+  author Users? @relation(fields: [userId], references: [userId], onDelete: SetNull)
+
+  replies Comments[] @relation("replies")
+}
+
+model SonminsuRequests {
+  id Int @id @default(autoincrement())
+  userId Int? @map("user_id")
+  title String
+  content String
+  done Boolean @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user Users? @relation(fields: [userId], references: [userId] ,onDelete: SetNull)
+
+  answers SonminsuAnswers[]
+  images SonminsuRequestImages[]
+}
+
+model SonminsuRequestImages {
+  id Int @id @default(autoincrement())
+  requestId Int? @map("request_id")
+  url String
+
+  request SonminsuRequests? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+}
+
+model SonminsuAnswers {
+  id Int @id @default(autoincrement())
+  userId Int? @map("user_id")
+  requestId Int? @map("request_id")
+  content String
+  choosed Boolean @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user Users? @relation(fields: [userId], references: [userId], onDelete: SetNull)
+  request SonminsuRequests? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+
+  items SonminsuItems[]
+}
+
+model SonminsuItems {
+  id Int @id @default(autoincrement())
+  feedId Int? @map("feed_id")
+  answerId Int? @map("answer_id")
+  originUrl String @map("origin_url")
+  imgUrl String @map("image_url")
+  title String
+  price String
+  registration Boolean @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  feed Feeds? @relation(fields: [feedId], references: [id], onDelete: SetNull)
+  answer SonminsuAnswers? @relation(fields: [answerId], references: [id], onDelete: SetNull)
+
+  bucketItems BucketItems[]
+}
+
+model Buckets {
+  id Int @id @default(autoincrement())
+  userId Int @map("user_id")
+  bucketName String @map("bucket_name")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  owner Users @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  items BucketItems[]
+}
+
+model BucketItems {
+  bucketId Int @map("bucket_id")
+  itemId Int @map("item_id")
+
+  bucket Buckets @relation(fields: [bucketId], references: [id], onDelete: Cascade)
+  item SonminsuItems @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@id([bucketId,itemId])
+}
+
+model Messages {
+  id Int @id @default(autoincrement())
+  fandomId Int? @map("fandom_id")
+  userId Int? @map("user_id")
+  content String
+  createdAt DateTime @default(now()) @map("created_at")
+  deletedAt DateTime @default(dbgenerated("('1970-01-01T00:00:00.000Z')")) @map("deleted_at")
+
+  fandom Fandoms? @relation(fields: [fandomId], references: [id], onDelete: SetNull)
+  author Users? @relation(fields: [userId], references: [userId], onDelete: SetNull)
+
+  files MessageFiles[]
+}
+
+model MessageFiles {
+  id Int @id @default(autoincrement())
+  messageId Int? @map("message_id")
+  url String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  message Messages? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+}
+
+model ReadedMessages {
+  userId Int @id @map("user_id")
+  fandomId Int @map("fandom_id")
+  messageId Int @map("message_id")
+
+  user Users @relation(fields: [userId], references: [userId], onDelete: Cascade)
+}
