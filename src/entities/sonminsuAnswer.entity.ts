@@ -5,6 +5,7 @@ export class SonminsuAnswerEntity implements SonminsuAnswers {
   userId: number;
   requestId: number;
   content: string;
-  choosed: boolean;
+  isChoosed: boolean;
   createdAt: Date;
+  deletedAt: Date;
 }
