@@ -7,6 +7,8 @@ import { PrismaService } from './data-access/prisma/prisma.service';
 
 const validationPipeConifg = {
   whitelist: true,
+  transform: true,
+  transformOptions: { enableImplicitConversion: true },
   // forbidNonWhitelisted: true,
   errorHttpStatusCode: 400,
 };
