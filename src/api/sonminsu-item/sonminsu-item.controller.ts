@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -38,7 +39,7 @@ export class SonminsuItemController {
     );
   }
 
-  @Post(':id')
+  @Patch(':id')
   @UseGuards(AuthGuard)
   @ApiParam({
     name: 'id',
