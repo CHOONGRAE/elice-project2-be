@@ -1,7 +1,7 @@
 import { CheerioAPI, load } from 'cheerio';
 
 type Info = {
-  [key: string]: string | string[];
+  [key: string]: string;
 };
 
 export type ExtractResult = {
@@ -22,13 +22,6 @@ export const extract = (html: string) => {
     if (/og:/i.test(property)) {
       const infoProperty = property.replace(/og:/i, '');
       if (!info[infoProperty]) info[infoProperty] = content;
-      else {
-        if (typeof info[infoProperty] === 'string') {
-          info[infoProperty] = [info[infoProperty] as string, content];
-        } else {
-          (info[infoProperty] as string[]).push(content);
-        }
-      }
     }
   });
 

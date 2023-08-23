@@ -3,9 +3,7 @@ import { requests, extract, resultCheck } from './utils';
 
 @Injectable()
 export class ScraperService {
-  async doScrap(
-    url = 'https://www.coupang.com/vp/products/7495068226?vendorItemId=85271418374&sourceType=HOME_GW_PROMOTION&searchId=feed-cfc281f48e3b46cab288fdb0ae388ca1-gw_promotion&isAddedCart=',
-  ) {
+  async doScrap(url: string) {
     try {
       const res = await requests(url);
 
