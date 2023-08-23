@@ -5,4 +5,5 @@ export class MessageFileEntity implements MessageFiles {
   messageId: number;
   url: string;
   createdAt: Date;
+  deletedAt: Date;
 }

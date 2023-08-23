@@ -5,6 +5,8 @@ export class FeedEntity implements Feeds {
   userId: number;
   fandomId: number;
   content: string;
+  groupName: string;
+  artistName: string;
   createdAt: Date;
   deletedAt: Date;
 }

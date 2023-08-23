@@ -5,6 +5,9 @@ export class SonminsuRequestEntity implements SonminsuRequests {
   userId: number;
   title: string;
   content: string;
-  done: boolean;
+  groupName: string;
+  artistName: string;
+  isDone: boolean;
   createdAt: Date;
+  deletedAt: Date;
 }
