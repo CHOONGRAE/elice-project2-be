@@ -4,6 +4,8 @@ import { RedisModule } from '@redis/redis.module';
 import { MailerModule } from '@mailer';
 import { AuthModule } from '@api/auth/auth.module';
 import { JwtModule } from '@jwt';
+import { ScraperModule } from '@scraper';
+import { S3Module } from '@s3';
 import { FollowModule } from './follow/follow.module';
 import { FandomModule } from './fandom/fandom.module';
 
@@ -14,6 +16,8 @@ import { FandomModule } from './fandom/fandom.module';
     RedisModule,
     MailerModule,
     JwtModule,
+    ScraperModule,
+    S3Module,
     FollowModule,
     FandomModule,
   ],
