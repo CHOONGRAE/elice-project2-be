@@ -5,15 +5,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 import { RedisService } from '@redis/redis.service';
-import {
-  CreateAuthDto,
-  SendVerificationCodeDto,
-  SigninDto,
-  ConfirmVerificationCodeDto,
-} from '@dto/authDto';
+import { SendVerificationCodeDto } from '@dto/authDto/send-verificationCode.dto';
+import { ConfirmVerificationCodeDto } from '@dto/authDto/confirm-verificationCode.dto';
+import { CreateAuthDto } from '@dto/authDto/create-auth.dto';
+import { SigninDto } from '@dto/authDto/signin.dto';
 import { MailerService } from 'src/mailer/mailer.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { S3Service } from 'src/s3/s3.service';
 
 const ALPHABET = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
 
@@ -36,6 +35,7 @@ export class AuthService {
     private readonly redis: RedisService,
     private readonly mailer: MailerService,
     private readonly jwt: JwtService,
+    private readonly s3: S3Service,
   ) {}
 
   async sendVerificationCode({ email }: SendVerificationCodeDto) {
@@ -74,6 +74,9 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const { id } = await this.prisma.auth.create({
+      include: {
+        user: true,
+      },
       data: {
         email,
         password: hashedPassword,

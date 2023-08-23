@@ -8,16 +8,21 @@ import {
   Res,
   Req,
   UnauthorizedException,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
-  CreateAuthDto,
-  SigninDto,
-  ConfirmVerificationCodeDto,
-  SendVerificationCodeDto,
-} from '@dto/authDto';
-import { ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
+  ApiOperation,
+  ApiTags,
+  ApiResponse,
+  ApiConsumes,
+} from '@nestjs/swagger';
 import { Request, Response } from 'express';
+import { SendVerificationCodeDto } from '@dto/authDto/send-verificationCode.dto';
+import { ConfirmVerificationCodeDto } from '@dto/authDto/confirm-verificationCode.dto';
+import { CreateAuthDto } from '@dto/authDto/create-auth.dto';
+import { SigninDto } from '@dto/authDto/signin.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller({
   path: 'auth',
