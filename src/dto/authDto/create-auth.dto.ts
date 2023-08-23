@@ -10,7 +10,7 @@ import {
 
 export class CreateAuthDto extends IntersectionType(
   OmitType(AuthEntity, ['id'] as const),
-  OmitType(UserEntity, ['userId', 'selectedAnswerCount', 'createdAt'] as const),
+  OmitType(UserEntity, ['id', 'authId', 'createdAt', 'deletedAt']),
 ) {
   @IsNotEmpty()
   @IsString()
