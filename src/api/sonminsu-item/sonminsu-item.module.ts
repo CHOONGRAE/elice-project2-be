@@ -7,5 +7,6 @@ import { ScraperModule } from '@scraper';
   imports: [ScraperModule],
   providers: [SonminsuItemService],
   controllers: [SonminsuItemController],
+  exports: [SonminsuItemService],
 })
 export class SonminsuItemModule {}

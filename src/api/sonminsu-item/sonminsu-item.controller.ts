@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -13,7 +14,7 @@ import { ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateSonminsuItemDto } from '@dto/sonminsuItemDto/create-sonminsuItem.dto';
 import { AuthGuard } from '@guards/auth.guard';
 import { UpdateSonminsuItemDto } from '@dto/sonminsuItemDto/update-sonminsuItem.dto';
-import { PaginateSonminsuItemDto } from '@dto/sonminsuItemDto/paginate-sinminsuItem.dto';
+import { PaginateSonminsuItemDto } from '@dto/sonminsuItemDto/paginate-sonminsuItem.dto';
 
 @Controller({
   path: 'sonminsu-items',
@@ -38,7 +39,7 @@ export class SonminsuItemController {
     );
   }
 
-  @Post(':id')
+  @Patch(':id')
   @UseGuards(AuthGuard)
   @ApiParam({
     name: 'id',

@@ -8,6 +8,7 @@ import { S3Module } from '@s3';
 import { FollowModule } from './follow/follow.module';
 import { FandomModule } from './fandom/fandom.module';
 import { SonminsuItemModule } from './sonminsu-item/sonminsu-item.module';
+import { FeedModule } from './feed/feed.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { SonminsuItemModule } from './sonminsu-item/sonminsu-item.module';
     FollowModule,
     FandomModule,
     SonminsuItemModule,
+    FeedModule,
   ],
 })
 export class ApiModule {}
