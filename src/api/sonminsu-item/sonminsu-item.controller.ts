@@ -13,7 +13,7 @@ import { ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateSonminsuItemDto } from '@dto/sonminsuItemDto/create-sonminsuItem.dto';
 import { AuthGuard } from '@guards/auth.guard';
 import { UpdateSonminsuItemDto } from '@dto/sonminsuItemDto/update-sonminsuItem.dto';
-import { PaginateSonminsuItemDto } from '@dto/sonminsuItemDto/paginate-sinminsuItem.dto';
+import { PaginateSonminsuItemDto } from '@dto/sonminsuItemDto/paginate-sonminsuItem.dto';
 
 @Controller({
   path: 'sonminsu-items',
