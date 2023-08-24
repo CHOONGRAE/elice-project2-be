@@ -10,6 +10,7 @@ import { FandomModule } from './fandom/fandom.module';
 import { SonminsuItemModule } from './sonminsu-item/sonminsu-item.module';
 import { FeedModule } from './feed/feed.module';
 import { FandomAnnouncementModule } from './fandom-announcement/fandom-announcement.module';
+import { SonminsuRequestModule } from './sonminsu-request/sonminsu-request.module';
 
 @Module({
   imports: [
@@ -22,8 +23,9 @@ import { FandomAnnouncementModule } from './fandom-announcement/fandom-announcem
     FollowModule,
     FandomModule,
     FandomAnnouncementModule,
-    SonminsuItemModule,
     FeedModule,
+    SonminsuRequestModule,
+    SonminsuItemModule,
   ],
 })
 export class ApiModule {}
