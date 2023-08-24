@@ -4,7 +4,6 @@ import {
   IsEmail,
   IsNotEmpty,
   IsNumberString,
-  IsOptional,
   IsString,
   Length,
 } from 'class-validator';
