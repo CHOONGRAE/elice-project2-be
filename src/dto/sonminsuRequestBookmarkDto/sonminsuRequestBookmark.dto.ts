@@ -9,5 +9,5 @@ export class SonminsuRequestBookmarkDto extends SonminsuRequestBookmarkEntity {
 
   @IsNumber()
   @ApiProperty()
-  fandomId: number;
+  requestId: number;
 }
