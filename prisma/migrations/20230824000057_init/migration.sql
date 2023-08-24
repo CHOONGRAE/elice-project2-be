@@ -179,8 +179,8 @@ CREATE TABLE "SonminsuAnswers" (
 -- CreateTable
 CREATE TABLE "SonminsuItems" (
     "id" SERIAL NOT NULL,
-    "feed_id" INTEGER NOT NULL,
-    "answer_id" INTEGER NOT NULL,
+    "feed_id" INTEGER,
+    "answer_id" INTEGER,
     "origin_url" TEXT NOT NULL,
     "image_url" TEXT NOT NULL,
     "title" TEXT NOT NULL,
@@ -320,10 +320,10 @@ ALTER TABLE "SonminsuAnswers" ADD CONSTRAINT "SonminsuAnswers_user_id_fkey" FORE
 ALTER TABLE "SonminsuAnswers" ADD CONSTRAINT "SonminsuAnswers_request_id_fkey" FOREIGN KEY ("request_id") REFERENCES "SonminsuRequests"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SonminsuItems" ADD CONSTRAINT "SonminsuItems_feed_id_fkey" FOREIGN KEY ("feed_id") REFERENCES "Feeds"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "SonminsuItems" ADD CONSTRAINT "SonminsuItems_feed_id_fkey" FOREIGN KEY ("feed_id") REFERENCES "Feeds"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SonminsuItems" ADD CONSTRAINT "SonminsuItems_answer_id_fkey" FOREIGN KEY ("answer_id") REFERENCES "SonminsuAnswers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "SonminsuItems" ADD CONSTRAINT "SonminsuItems_answer_id_fkey" FOREIGN KEY ("answer_id") REFERENCES "SonminsuAnswers"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Buckets" ADD CONSTRAINT "Buckets_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
