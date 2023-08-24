@@ -11,6 +11,7 @@ import { SonminsuItemModule } from './sonminsu-item/sonminsu-item.module';
 import { FeedModule } from './feed/feed.module';
 import { FandomAnnouncementModule } from './fandom-announcement/fandom-announcement.module';
 import { SonminsuRequestModule } from './sonminsu-request/sonminsu-request.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { SonminsuRequestModule } from './sonminsu-request/sonminsu-request.modul
     FeedModule,
     SonminsuRequestModule,
     SonminsuItemModule,
+    UserModule,
   ],
 })
 export class ApiModule {}
