@@ -222,8 +222,8 @@ model SonminsuAnswers {
 
 model SonminsuItems {
   id Int @id @default(autoincrement())
-  feedId Int @map("feed_id")
-  answerId Int @map("answer_id")
+  feedId Int? @map("feed_id")
+  answerId Int? @map("answer_id")
   originUrl String @map("origin_url")
   imgUrl String @map("image_url")
   title String
@@ -231,8 +231,8 @@ model SonminsuItems {
   registration Boolean?
   createdAt DateTime @default(now()) @map("created_at")
 
-  feed Feeds @relation(fields: [feedId], references: [id])
-  answer SonminsuAnswers @relation(fields: [answerId], references: [id])
+  feed Feeds? @relation(fields: [feedId], references: [id])
+  answer SonminsuAnswers? @relation(fields: [answerId], references: [id])
 
   bucketItems BucketItems[]
 }
