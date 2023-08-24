@@ -15,19 +15,19 @@ import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
-    AuthModule,
     PrismaModule,
     RedisModule,
     MailerModule,
     JwtModule,
     S3Module,
-    FollowModule,
+    AuthModule,
+    UserModule,
     FandomModule,
     FandomAnnouncementModule,
     FeedModule,
     SonminsuRequestModule,
     SonminsuItemModule,
-    UserModule,
+    FollowModule,
   ],
 })
 export class ApiModule {}
