@@ -17,18 +17,26 @@ export class FeedService {
   ) {}
 
   async createFeed(userId: number, createFeedDto: CreateFeedDto) {
-    const { fandomId, content, hashTags, image, sonminsuItems } = createFeedDto;
+    const {
+      fandomId,
+      content,
+      groupName,
+      artistName,
+      hashTags,
+      image,
+      sonminsuItems,
+    } = createFeedDto;
     const createdFeed = await this.prisma.feeds.create({
       include: {
-        fandoms: {
-          where: { id: fandomId },
-        },
+        fandoms: true,
         // 조인 처리
       },
       data: {
         userId,
         fandomId,
         content,
+        groupName,
+        artistName,
         images: {
           create: [
             {

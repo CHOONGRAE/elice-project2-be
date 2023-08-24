@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber } from 'class-validator';
 
 export class PaginateFeedDto {
-  @ApiProperty({ default: 1, required: false })
+  @ApiProperty({ default: 0, required: false })
   @IsNumber()
   page: number;
 
