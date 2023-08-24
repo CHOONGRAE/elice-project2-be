@@ -9,6 +9,7 @@ import { FollowModule } from './follow/follow.module';
 import { FandomModule } from './fandom/fandom.module';
 import { SonminsuItemModule } from './sonminsu-item/sonminsu-item.module';
 import { FeedModule } from './feed/feed.module';
+import { FandomAnnouncementModule } from './fandom-announcement/fandom-announcement.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { FeedModule } from './feed/feed.module';
     S3Module,
     FollowModule,
     FandomModule,
+    FandomAnnouncementModule,
     SonminsuItemModule,
     FeedModule,
   ],
