@@ -34,6 +34,7 @@ import { GetSonminsuRequestDto } from '@dto/sonminsuRequestDto/get-sonmisuReques
 import { PaginateSonminsuRequestDto } from '@dto/sonminsuRequestDto/paginate-sonminsuRequest.dto';
 import { SonminsuRequestBookmarkService } from '@api/sonminsu-request-bookmark/sonminsu-request-bookmark.service';
 import { CreateSonminsuRequestDto } from '@dto/sonminsuRequestDto/create-sonminsuRequest.dto';
+import { UpdateSonminsuRequestDto } from '@dto/sonminsuRequestDto/update-sonminsuRequest.dto';
 
 @Controller({
   path: 'users',
@@ -54,7 +55,7 @@ export class UserController {
   @ApiOperation({
     summary: '가입한 팬덤 목록',
   })
-  async getFandoms(@User('id') id: number) {
+  async getFandoms(@User() id: number) {
     return await this.fandomService.getFandomsByUser(id);
   }
 
@@ -77,7 +78,7 @@ export class UserController {
   })
   async createFandom(
     @UploadedFile() image: Express.Multer.File,
-    @User('sub') userId: number,
+    @User() userId: number,
     @Body() createFandomDto: CreateFandomDto,
   ) {
     console.log(userId);
@@ -88,7 +89,7 @@ export class UserController {
     });
   }
 
-  @Patch('fandoms/:id')
+  @Patch('fandoms/:fandomId')
   @UseInterceptors(
     FileInterceptor('image', {
       fileFilter: (req, file, cb) => {
@@ -105,14 +106,10 @@ export class UserController {
   @ApiOperation({
     summary: '팬덤 수정',
   })
-  @ApiParam({
-    name: 'id',
-    required: true,
-  })
   async updateFandom(
     @UploadedFile() image: Express.Multer.File,
-    @Param('id') id: number,
-    @User('id') userId: number,
+    @Param('fandomId') id: number,
+    @User() userId: number,
     @Body()
     updateFandomDto: UpdateFandomDto,
   ) {
@@ -124,15 +121,11 @@ export class UserController {
     });
   }
 
-  @Delete('fandoms/:id')
+  @Delete('fandoms/:fandomId')
   @ApiOperation({
     summary: '팬덤 삭제',
   })
-  @ApiParam({
-    name: 'id',
-    required: true,
-  })
-  async deleteFandom(@Param('id') id: number, @User('sub') userId: number) {
+  async deleteFandom(@Param('fandomId') id: number, @User() userId: number) {
     await this.fandomService.deleteFandom({ id, userId });
   }
 
@@ -156,7 +149,7 @@ export class UserController {
     summary: '본인이 의뢰한 목록',
   })
   async getSonminsuRequests(
-    @User('sub') userId: number,
+    @User() userId: number,
     @Query() getSonminsuRequestDto: GetSonminsuRequestDto,
   ) {
     return await this.sonminsuRequestSevice.getSonminsuRequestsByUser(
@@ -183,7 +176,7 @@ export class UserController {
     summary: '의뢰 작성',
   })
   async createSonminsuRequest(
-    @User('sub') userId: number,
+    @User() userId: number,
     @UploadedFile() image: Express.Multer.File,
     @Body() createSonminsuRequestDto: CreateSonminsuRequestDto,
   ) {
@@ -198,7 +191,7 @@ export class UserController {
     summary: '본인이 찜한 의뢰 목록',
   })
   async getSonminsuRequestBookmarks(
-    @User('sub') userId: number,
+    @User() userId: number,
     @Query() paginateSonminsuRequestDto: PaginateSonminsuRequestDto,
   ) {
     return await this.sonminsuRequestSevice.getSonminsuRequestsByBookmark(
@@ -207,17 +200,43 @@ export class UserController {
     );
   }
 
-  @Get('sonminsu-requests/bookmarks/:id/toggle')
+  @Patch('sonminsu-requests/:requestId')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      fileFilter: (req, file, cb) => {
+        if (/image/i.test(file.mimetype)) {
+          file.originalname = Buffer.from(file.originalname, 'latin1').toString(
+            'utf-8',
+          );
+          cb(null, true);
+        } else cb(new BadRequestException(), true);
+      },
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: '의뢰 수정',
+  })
+  async updateSonminsuRequest(
+    @User() userId: number,
+    @Param('requestId') requestId: number,
+    @UploadedFile() image: Express.Multer.File,
+    @Body() updateSonminsuRequestDto: UpdateSonminsuRequestDto,
+  ) {
+    return await this.sonminsuRequestSevice.updateSonminsuRequest(
+      requestId,
+      userId,
+      { ...updateSonminsuRequestDto, image },
+    );
+  }
+
+  @Put('sonminsu-requests/bookmarks/toggle/:requestId')
   @ApiOperation({
     summary: '의뢰 북마크',
   })
-  @ApiParam({
-    name: 'id',
-    required: true,
-  })
   async toggleSonminsuRequestBookmark(
-    @User('sub') userId: number,
-    @Param('id') requestId: number,
+    @User() userId: number,
+    @Param('requestId') requestId: number,
   ) {
     await this.sonminsuRequestBookmarkService.changeSonminsuRequestBookmarkStatus(
       { userId, requestId },

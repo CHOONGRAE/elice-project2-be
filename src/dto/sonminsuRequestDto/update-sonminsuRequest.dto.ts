@@ -7,5 +7,20 @@ export class UpdateSonminsuRequestDto extends PartialType(
 ) {
   @IsString()
   @ApiProperty()
+  title: string;
+
+  @IsString()
+  @ApiProperty()
   content: string;
+
+  @IsString()
+  @ApiProperty()
+  groupName: string;
+
+  @IsString()
+  @ApiProperty()
+  artistName: string;
+
+  @IsString()
+  image: Express.Multer.File;
 }

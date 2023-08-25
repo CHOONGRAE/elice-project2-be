@@ -39,59 +39,7 @@ export class SonminsuRequestService {
             },
           },
         },
-        select: {
-          id: true,
-          user: {
-            select: {
-              id: true,
-              nickName: true,
-            },
-          },
-          images: {
-            select: {
-              url: true,
-            },
-          },
-          _count: {
-            select: {
-              answers: {
-                where: {
-                  deletedAt: null,
-                },
-              },
-            },
-          },
-          answers: {
-            orderBy: {
-              createdAt: 'desc',
-            },
-            select: {
-              id: true,
-              user: {
-                select: {
-                  id: true,
-                  profileImgUrl: true,
-                  nickName: true,
-                  _count: {
-                    select: {
-                      sonminsuAnswers: {
-                        where: { isChoosed: true },
-                      },
-                    },
-                  },
-                },
-              },
-              items: {
-                select: {
-                  id: true,
-                  originUrl: true,
-                  imgUrl: true,
-                  price: true,
-                },
-              },
-            },
-          },
-        },
+        select: this.detailSelectField,
       });
 
     return {
@@ -104,6 +52,9 @@ export class SonminsuRequestService {
     userId: number,
     updateSonminsuRequestDto: UpdateSonminsuRequestDto,
   ) {
+    const { title, content, groupName, artistName, image } =
+      updateSonminsuRequestDto;
+
     const { images, ...updatedSonminsuRequest } =
       await this.prisma.sonminsuRequests.update({
         where: {
@@ -112,12 +63,23 @@ export class SonminsuRequestService {
           deletedAt: null,
         },
         data: {
-          ...updateSonminsuRequestDto,
+          title,
+          content,
+          groupName,
+          artistName,
+          images: {
+            deleteMany: {},
+            create: {
+              url: await this.s3.uploadImage(
+                image,
+                `requests/author-${userId}/`,
+              ),
+            },
+          },
         },
-        include: {
-          images: true,
-        },
+        select: this.detailSelectField,
       });
+
     return {
       data: { ...updatedSonminsuRequest, image: images[0]?.url || null },
     };
@@ -287,6 +249,10 @@ export class SonminsuRequestService {
   private readonly detailSelectField: Prisma.SonminsuRequestsSelect<DefaultArgs> =
     {
       id: true,
+      title: true,
+      content: true,
+      groupName: true,
+      artistName: true,
       user: {
         select: {
           id: true,
@@ -300,7 +266,11 @@ export class SonminsuRequestService {
       },
       _count: {
         select: {
-          answers: true,
+          answers: {
+            where: {
+              deletedAt: null,
+            },
+          },
         },
       },
       answers: {
@@ -314,8 +284,6 @@ export class SonminsuRequestService {
               id: true,
               profileImgUrl: true,
               nickName: true,
-            },
-            include: {
               _count: {
                 select: {
                   sonminsuAnswers: {
