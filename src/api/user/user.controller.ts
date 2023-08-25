@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -18,6 +19,8 @@ import {
   ApiConsumes,
   ApiOperation,
   ApiParam,
+  ApiProperty,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { UserService } from './user.service';
@@ -26,7 +29,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateFandomDto } from '@dto/fandomDto/create-fandom.dto';
 import { UpdateFandomDto } from '@dto/fandomDto/update-fandom.dto';
 import { User } from '@decorator/User.decorator';
-import { DeleteFandomDto } from '@dto/fandomDto/delete-fandom.dto';
+import { SonminsuRequestService } from '@api/sonminsu-request/sonminsu-request.service';
+import { GetSonminsuRequestDto } from '@dto/sonminsuRequestDto/get-sonmisuRequest.dto';
+import { PaginateSonminsuRequestDto } from '@dto/sonminsuRequestDto/paginate-sonminsuRequest.dto';
 
 @Controller({
   path: 'users',
@@ -39,6 +44,7 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly fandomService: FandomService,
+    private readonly sonminsuRequestSevice: SonminsuRequestService,
   ) {}
 
   @Get('fandoms')
@@ -123,46 +129,62 @@ export class UserController {
     name: 'id',
     required: true,
   })
-  async deleteFandom(
-    @Param('id') id: number,
-    @User('id') userId: DeleteFandomDto,
-  ) {
-    await this.fandomService.deleteFandom({ id, ...userId });
+  async deleteFandom(@Param('id') id: number, @User('sub') userId: number) {
+    await this.fandomService.deleteFandom({ id, userId });
   }
 
-  @Get('feeds')
-  async getFeeds() {}
+  // @Get('feeds')
+  // async getFeeds() {}
 
-  @Post('feeds')
-  async createFeed() {}
+  // @Post('feeds')
+  // async createFeed() {}
 
-  @Get('feeds/my')
-  async getMyFeeds() {}
+  // @Get('feeds/my')
+  // async getMyFeeds() {}
 
-  @Patch('feeds/:id')
-  async updateFeed() {}
+  // @Patch('feeds/:id')
+  // async updateFeed() {}
 
-  @Delete('feeds/:id')
-  async deleteFeed() {}
+  // @Delete('feeds/:id')
+  // async deleteFeed() {}
 
   @Get('sonminsu-requests')
-  async getSonminsuRequests() {}
-
-  @Get('sonminsu-requests/done')
-  async getSonminsuRequestsDone() {}
+  @ApiOperation({
+    summary: '본인이 의뢰한 목록',
+  })
+  async getSonminsuRequests(
+    @User('sub') userId: number,
+    @Query() getSonminsuRequestDto: GetSonminsuRequestDto,
+  ) {
+    return await this.sonminsuRequestSevice.getSonminsuRequestsByUser(
+      userId,
+      getSonminsuRequestDto,
+    );
+  }
 
   @Get('sonminsu-requests/bookmarks')
-  async getSonminsuRequestBookmarks() {}
+  @ApiOperation({
+    summary: '본인이 찜한 의뢰 목록',
+  })
+  async getSonminsuRequestBookmarks(
+    @User('sub') userId: number,
+    @Query() paginateSonminsuRequestDto: PaginateSonminsuRequestDto,
+  ) {
+    return await this.sonminsuRequestSevice.getSonminsuRequestsByBookmark(
+      userId,
+      paginateSonminsuRequestDto,
+    );
+  }
 
-  @Get('sonminsu-requests/bookmarks/toggle/:id')
+  @Get('sonminsu-requests/bookmarks/:id/toggle')
   async toggleSonminsuRequestBookmark() {}
 
-  @Get('follows')
-  async getFollows() {}
+  // @Get('follows')
+  // async getFollows() {}
 
-  @Get('followers')
-  async getFollowers() {}
+  // @Get('followers')
+  // async getFollowers() {}
 
-  @Put('follows/toggle/:id')
-  async toggleFollow() {}
+  // @Put('follows/toggle/:id')
+  // async toggleFollow() {}
 }

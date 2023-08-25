@@ -1,5 +1,6 @@
 import { CreateSonminsuRequestDto } from '@dto/sonminsuRequestDto/create-sonminsuRequest.dto';
 import { GetSonminsuRequestDto } from '@dto/sonminsuRequestDto/get-sonmisuRequest.dto';
+import { PaginateSonminsuRequestDto } from '@dto/sonminsuRequestDto/paginate-sonminsuRequest.dto';
 import { UpdateSonminsuRequestDto } from '@dto/sonminsuRequestDto/update-sonminsuRequest.dto';
 import { ConflictException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
@@ -156,9 +157,9 @@ export class SonminsuRequestService {
 
   async getSonminsuRequestsByBookmark(
     userId: number,
-    getSonminsuRequestDto: GetSonminsuRequestDto,
+    paginateSonminsuRequestDto: PaginateSonminsuRequestDto,
   ) {
-    const { page, perPage } = getSonminsuRequestDto;
+    const { page, perPage } = paginateSonminsuRequestDto;
 
     const [result, totalCount] = await this.prisma.$transaction([
       this.prisma.sonminsuRequestBookmarks.findMany({
