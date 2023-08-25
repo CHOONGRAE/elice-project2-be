@@ -4,6 +4,8 @@ import { UpdateFandomDto } from '@dto/fandomDto/update-fandom.dto';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 import { S3Service } from 'src/s3/s3.service';
+import { Prisma } from '@prisma/client';
+import { DefaultArgs } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class FandomService {
@@ -15,7 +17,11 @@ export class FandomService {
   async createFandom(createFandomDto: CreateFandomDto) {
     const { userId, fandomName, image } = createFandomDto;
 
-    const createdFandom = await this.prisma.fandoms.create({
+    const {
+      messages,
+      _count: { subscribes: memberLength },
+      ...createdFandom
+    } = await this.prisma.fandoms.create({
       data: {
         userId,
         fandomName,
@@ -23,22 +29,37 @@ export class FandomService {
           image,
           `fandoms/admin-${userId}/`,
         ),
+        subscribes: {
+          create: {
+            userId,
+          },
+        },
+        rank: {
+          create: {
+            point: 1,
+          },
+        },
       },
-      select: {
-        id: true,
-        userId: true,
-        fandomName: true,
-        thumbnailImgUrl: true,
-      },
+      select: this.selectField,
     });
 
-    return { data: createdFandom };
+    return {
+      data: {
+        ...createdFandom,
+        memberLength,
+        lastChatTime: messages[0]?.createdAt || null,
+      },
+    };
   }
 
   async updateFandom(updateFandomDto: UpdateFandomDto) {
     const { id, userId, fandomName, image } = updateFandomDto;
 
-    const updatedFandom = await this.prisma.fandoms
+    const {
+      messages,
+      _count: { subscribes: memberLength },
+      ...updatedFandom
+    } = await this.prisma.fandoms
       .update({
         where: {
           id,
@@ -51,18 +72,19 @@ export class FandomService {
             image &&
             (await this.s3.uploadImage(image, `fandoms/admin-${userId}/`)),
         },
-        select: {
-          id: true,
-          userId: true,
-          fandomName: true,
-          thumbnailImgUrl: true,
-        },
+        select: this.selectField,
       })
       .catch(() => {
         throw new ForbiddenException();
       });
 
-    return { data: updatedFandom };
+    return {
+      data: {
+        ...updatedFandom,
+        memberLength,
+        lastChatTime: messages[0]?.createdAt || null,
+      },
+    };
   }
 
   async deleteFandom(deleteFandomDto: DeleteFandomDto) {
@@ -94,18 +116,43 @@ export class FandomService {
   }
 
   async getFandomsByUser(userId: number) {
-    console.log(userId);
     const userFandoms = await this.prisma.fandoms.findMany({
-      include: {
+      where: {
+        deletedAt: null,
         subscribes: {
-          where: {
+          some: {
             userId,
           },
         },
       },
+      select: this.selectField,
+      orderBy: [
+        {
+          rank: {
+            point: 'asc',
+          },
+        },
+        { createdAt: 'asc' },
+      ],
     });
 
-    return { data: userFandoms };
+    return {
+      data: userFandoms.map(
+        ({
+          id,
+          fandomName,
+          thumbnailImgUrl,
+          _count: { subscribes: memberLength },
+          messages,
+        }) => ({
+          id,
+          fandomName,
+          thumbnailImgUrl,
+          memberLength,
+          lastChatTime: messages[0]?.createdAt || null,
+        }),
+      ),
+    };
   }
 
   async getFandomsBySearch(searchString: string) {
@@ -120,20 +167,7 @@ export class FandomService {
 
   private async makeSortedFandoms(take = 10, skip = 0) {
     const result = await this.prisma.fandoms.findMany({
-      include: {
-        _count: {
-          select: { subscribes: true },
-        },
-        messages: {
-          take: 1,
-          orderBy: {
-            createdAt: 'desc',
-          },
-          select: {
-            createdAt: true,
-          },
-        },
-      },
+      select: this.selectField,
       skip,
       take,
       orderBy: [
@@ -166,4 +200,33 @@ export class FandomService {
       }),
     );
   }
+
+  private readonly selectField: Prisma.FandomsSelect<DefaultArgs> = {
+    id: true,
+    fandomName: true,
+    thumbnailImgUrl: true,
+    _count: {
+      select: {
+        subscribes: {
+          where: {
+            user: {
+              deletedAt: null,
+            },
+          },
+        },
+      },
+    },
+    messages: {
+      where: {
+        deletedAt: null,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 1,
+      select: {
+        createdAt: true,
+      },
+    },
+  };
 }
