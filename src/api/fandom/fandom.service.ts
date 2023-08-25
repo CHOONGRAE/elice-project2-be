@@ -2,14 +2,33 @@ import { CreateFandomDto } from '@dto/fandomDto/create-fandom.dto';
 import { UpdateFandomDto } from '@dto/fandomDto/update-fandom.dto';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
+import { S3Service } from 'src/s3/s3.service';
 
 @Injectable()
 export class FandomService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly s3: S3Service,
+  ) {}
 
   async createFandom(createFandomDto: CreateFandomDto) {
+    const { userId, fandomName, image } = createFandomDto;
+
     const createdFandom = await this.prisma.fandoms.create({
-      data: createFandomDto,
+      data: {
+        userId,
+        fandomName,
+        thumbnailImgUrl: await this.s3.uploadImage(
+          image,
+          `fandoms/${fandomName}/`,
+        ),
+      },
+      select: {
+        id: true,
+        userId: true,
+        fandomName: true,
+        thumbnailImgUrl: true,
+      },
     });
 
     return { data: createdFandom };
