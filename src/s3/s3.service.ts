@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as aws from 'aws-sdk';
+import { getDatePath } from 'src/utils/getDatePath';
 
 @Injectable()
 export class S3Service {
@@ -26,7 +27,8 @@ export class S3Service {
     const trimedName = file.originalname.replace(/\s/gi, '');
     const fileName = `${Date.now()}_${trimedName}`;
 
-    const key = `${folderPath}${fileName}`;
+    const key = `${folderPath}${getDatePath()}/${fileName}`;
+
     const params = {
       Bucket: this.config.get('S3_BUCKET_NAME'),
       ACL: 'private',
@@ -35,7 +37,7 @@ export class S3Service {
       ContentType: file.mimetype,
     };
 
-    return new Promise((res, rej) => {
+    return new Promise<string>((res, rej) => {
       this.s3.putObject(params, (err) => {
         if (err) rej(err);
 

@@ -95,14 +95,30 @@ export class AuthService {
 
   async signin({ email, password }: SigninDto) {
     const exUser = await this.prisma.auth.findMany({
-      where: { email },
+      where: {
+        email,
+        user: {
+          some: {
+            authId: { not: null },
+          },
+        },
+      },
+      select: {
+        password: true,
+        user: {
+          select: { id: true },
+        },
+      },
     });
 
     if (!exUser.length) {
       throw new UnauthorizedException();
     }
 
-    const { id, password: hashedPassword } = exUser[0];
+    const {
+      user: [{ id }],
+      password: hashedPassword,
+    } = exUser[0];
 
     const isValidated = await bcrypt.compare(password, hashedPassword);
 
@@ -146,7 +162,10 @@ export class AuthService {
   private async createTokens(id: number, email: string) {
     const refreshKey = await bcrypt.hash(email, 10);
 
-    const accessToken = await this.jwt.signAsync({ sub: id });
+    const accessToken = await this.jwt.signAsync(
+      { sub: id },
+      { expiresIn: (EXPIRE_REFESH_TOKEN * 2) / 1000 },
+    );
 
     const refreshToken = await this.jwt.signAsync(
       { sub: id, email, key: refreshKey },

@@ -27,7 +27,8 @@
       "@scraper": ["src/scraper/scraper.module"],
       "@s3": ["src/s3/s3.module"],
       "@api/*": ["src/api/*"],
-      "@guards/*": ["src/guards/*"]
+      "@guards/*": ["src/guards/*"],
+      "@decorator/*": ["src/decorator/*"]
     }
   }
 }

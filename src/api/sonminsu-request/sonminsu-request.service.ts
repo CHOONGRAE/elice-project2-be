@@ -1,12 +1,12 @@
 import { CreateSonminsuRequestDto } from '@dto/sonminsuRequestDto/create-sonminsuRequest.dto';
 import { GetSonminsuRequestDto } from '@dto/sonminsuRequestDto/get-sonmisuRequest.dto';
+import { PaginateSonminsuRequestDto } from '@dto/sonminsuRequestDto/paginate-sonminsuRequest.dto';
 import { UpdateSonminsuRequestDto } from '@dto/sonminsuRequestDto/update-sonminsuRequest.dto';
 import { ConflictException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { PrismaService } from '@prisma/prisma.service';
 import { S3Service } from 'src/s3/s3.service';
-import { getDatePath } from 'src/utils/getDatePath';
 
 @Injectable()
 export class SonminsuRequestService {
@@ -32,7 +32,10 @@ export class SonminsuRequestService {
           artistName,
           images: {
             create: {
-              url: (await this.s3.uploadImage(image, getDatePath())) as string,
+              url: await this.s3.uploadImage(
+                image,
+                `requests/author-${userId}/`,
+              ),
             },
           },
         },
@@ -49,6 +52,9 @@ export class SonminsuRequestService {
     userId: number,
     updateSonminsuRequestDto: UpdateSonminsuRequestDto,
   ) {
+    const { title, content, groupName, artistName, image } =
+      updateSonminsuRequestDto;
+
     const { images, ...updatedSonminsuRequest } =
       await this.prisma.sonminsuRequests.update({
         where: {
@@ -57,12 +63,23 @@ export class SonminsuRequestService {
           deletedAt: null,
         },
         data: {
-          ...updateSonminsuRequestDto,
+          title,
+          content,
+          groupName,
+          artistName,
+          images: {
+            deleteMany: {},
+            create: {
+              url: await this.s3.uploadImage(
+                image,
+                `requests/author-${userId}/`,
+              ),
+            },
+          },
         },
-        include: {
-          images: true,
-        },
+        select: this.detailSelectField,
       });
+
     return {
       data: { ...updatedSonminsuRequest, image: images[0]?.url || null },
     };
@@ -156,9 +173,9 @@ export class SonminsuRequestService {
 
   async getSonminsuRequestsByBookmark(
     userId: number,
-    getSonminsuRequestDto: GetSonminsuRequestDto,
+    paginateSonminsuRequestDto: PaginateSonminsuRequestDto,
   ) {
-    const { page, perPage } = getSonminsuRequestDto;
+    const { page, perPage } = paginateSonminsuRequestDto;
 
     const [result, totalCount] = await this.prisma.$transaction([
       this.prisma.sonminsuRequestBookmarks.findMany({
@@ -232,6 +249,10 @@ export class SonminsuRequestService {
   private readonly detailSelectField: Prisma.SonminsuRequestsSelect<DefaultArgs> =
     {
       id: true,
+      title: true,
+      content: true,
+      groupName: true,
+      artistName: true,
       user: {
         select: {
           id: true,
@@ -245,7 +266,11 @@ export class SonminsuRequestService {
       },
       _count: {
         select: {
-          answers: true,
+          answers: {
+            where: {
+              deletedAt: null,
+            },
+          },
         },
       },
       answers: {
@@ -259,8 +284,6 @@ export class SonminsuRequestService {
               id: true,
               profileImgUrl: true,
               nickName: true,
-            },
-            include: {
               _count: {
                 select: {
                   sonminsuAnswers: {

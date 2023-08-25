@@ -1,11 +1,17 @@
 import { FandomEntity } from '@entities';
-import { OmitType } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty, PartialType } from '@nestjs/swagger';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class CreateFandomDto extends OmitType(FandomEntity, [
-  'id',
-  'createdAt',
-]) {
+export class CreateFandomDto extends PartialType(FandomEntity) {
+  @IsOptional()
+  @IsNumber()
+  @ApiHideProperty()
   userId: number;
+
+  @IsString()
+  @ApiProperty()
   fandomName: string;
-  thumbnailImgUrl: string;
+
+  @ApiProperty({ type: 'string', format: 'binary' })
+  image: Express.Multer.File;
 }

@@ -1,6 +1,6 @@
 import { SonminsuRequestEntity } from '@entities';
 import { ApiProperty, OmitType } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateSonminsuRequestDto extends OmitType(SonminsuRequestEntity, [
   'id',
@@ -29,6 +29,7 @@ export class CreateSonminsuRequestDto extends OmitType(SonminsuRequestEntity, [
   @ApiProperty()
   artistName: string;
 
+  @IsOptional()
   @IsNotEmpty()
   @ApiProperty({ type: 'string', format: 'binary' })
   image: Express.Multer.File;

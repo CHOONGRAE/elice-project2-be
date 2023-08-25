@@ -11,21 +11,23 @@ import { SonminsuItemModule } from './sonminsu-item/sonminsu-item.module';
 import { FeedModule } from './feed/feed.module';
 import { FandomAnnouncementModule } from './fandom-announcement/fandom-announcement.module';
 import { SonminsuRequestModule } from './sonminsu-request/sonminsu-request.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
-    AuthModule,
     PrismaModule,
     RedisModule,
     MailerModule,
     JwtModule,
     S3Module,
-    FollowModule,
+    AuthModule,
+    UserModule,
     FandomModule,
     FandomAnnouncementModule,
     FeedModule,
     SonminsuRequestModule,
     SonminsuItemModule,
+    FollowModule,
   ],
 })
 export class ApiModule {}
