@@ -1,6 +1,6 @@
 import { CreateFandomDto } from '@dto/fandomDto/create-fandom.dto';
 import { UpdateFandomDto } from '@dto/fandomDto/update-fandom.dto';
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 import { S3Service } from 'src/s3/s3.service';
 
@@ -20,7 +20,7 @@ export class FandomService {
         fandomName,
         thumbnailImgUrl: await this.s3.uploadImage(
           image,
-          `fandoms/${fandomName}/`,
+          `fandoms/admin-${userId}/`,
         ),
       },
       select: {
@@ -34,13 +34,32 @@ export class FandomService {
     return { data: createdFandom };
   }
 
-  async updateFandom(fandomId: number, updateFandomDto: UpdateFandomDto) {
-    const updatedFandom = await this.prisma.fandoms.update({
-      where: {
-        id: fandomId,
-      },
-      data: updateFandomDto,
-    });
+  async updateFandom(updateFandomDto: UpdateFandomDto) {
+    const { id, userId, fandomName, image } = updateFandomDto;
+
+    const updatedFandom = await this.prisma.fandoms
+      .update({
+        where: {
+          id,
+          userId,
+          deletedAt: null,
+        },
+        data: {
+          fandomName,
+          thumbnailImgUrl:
+            image &&
+            (await this.s3.uploadImage(image, `fandoms/admin-${userId}/`)),
+        },
+        select: {
+          id: true,
+          userId: true,
+          fandomName: true,
+          thumbnailImgUrl: true,
+        },
+      })
+      .catch(() => {
+        throw new ForbiddenException();
+      });
 
     return { data: updatedFandom };
   }
@@ -68,6 +87,7 @@ export class FandomService {
   }
 
   async getFandomsByUser(userId: number) {
+    console.log(userId);
     const userFandoms = await this.prisma.fandoms.findMany({
       include: {
         subscribes: {

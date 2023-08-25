@@ -5,20 +5,21 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
   Patch,
   Post,
   Put,
-  Req,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { FandomService } from '@api/fandom/fandom.service';
-import { Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateFandomDto } from '@dto/fandomDto/create-fandom.dto';
+import { UpdateFandomDto } from '@dto/fandomDto/update-fandom.dto';
+import { User } from '@decorator/User.decorator';
 
 @Controller({
   path: 'users',
@@ -36,9 +37,7 @@ export class UserController {
   @ApiOperation({
     summary: '가입한 팬덤 목록',
   })
-  async getFandoms(@Req() req: Request) {
-    const { id } = req['user'];
-
+  async getFandoms(@User('id') id: number) {
     return await this.fandomService.getFandomsByUser(id);
   }
 
@@ -61,20 +60,48 @@ export class UserController {
   })
   async createFandom(
     @UploadedFile() image: Express.Multer.File,
-    @Req() req: Request,
-    @Body() fandomName: CreateFandomDto,
+    @User('id') userId: number,
+    @Body() createFandomDto: CreateFandomDto,
   ) {
-    const { id } = req['user'];
-
     return await this.fandomService.createFandom({
-      userId: id,
-      ...fandomName,
+      userId,
+      ...createFandomDto,
       image,
     });
   }
 
   @Patch('fandoms/:id')
-  async updateFandom() {}
+  @UseInterceptors(
+    FileInterceptor('image', {
+      fileFilter: (req, file, cb) => {
+        if (/image/i.test(file.mimetype)) {
+          file.originalname = Buffer.from(file.originalname, 'latin1').toString(
+            'utf-8',
+          );
+          cb(null, true);
+        } else cb(new BadRequestException(), true);
+      },
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiParam({
+    name: 'id',
+    required: true,
+  })
+  async updateFandom(
+    @UploadedFile() image: Express.Multer.File,
+    @Param('id') id: number,
+    @User('id') userId: number,
+    @Body()
+    updateFandomDto: UpdateFandomDto,
+  ) {
+    return await this.fandomService.updateFandom({
+      id,
+      userId,
+      ...updateFandomDto,
+      image,
+    });
+  }
 
   @Delete('fandoms/:id')
   async deleteFandom() {}
