@@ -230,7 +230,7 @@ export class UserController {
     );
   }
 
-  @Put('sonminsu-requests/bookmarks/toggle/:requestId')
+  @Put('sonminsu-requests/:requestId/bookmarks/toggle')
   @ApiOperation({
     summary: '의뢰 북마크',
   })
