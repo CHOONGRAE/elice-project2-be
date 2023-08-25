@@ -13,20 +13,28 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiConsumes, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { FandomService } from '@api/fandom/fandom.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateFandomDto } from '@dto/fandomDto/create-fandom.dto';
 import { UpdateFandomDto } from '@dto/fandomDto/update-fandom.dto';
 import { User } from '@decorator/User.decorator';
+import { DeleteFandomDto } from '@dto/fandomDto/delete-fandom.dto';
 
 @Controller({
   path: 'users',
   version: '1',
 })
 @ApiTags('Users API')
-// @UseGuards(AuthGuard)
+@UseGuards(AuthGuard)
+@ApiBearerAuth('Authorization')
 export class UserController {
   constructor(
     private readonly userService: UserService,
@@ -60,9 +68,10 @@ export class UserController {
   })
   async createFandom(
     @UploadedFile() image: Express.Multer.File,
-    @User('id') userId: number,
+    @User('sub') userId: number,
     @Body() createFandomDto: CreateFandomDto,
   ) {
+    console.log(userId);
     return await this.fandomService.createFandom({
       userId,
       ...createFandomDto,
@@ -84,6 +93,9 @@ export class UserController {
     }),
   )
   @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: '팬덤 수정',
+  })
   @ApiParam({
     name: 'id',
     required: true,
@@ -104,7 +116,19 @@ export class UserController {
   }
 
   @Delete('fandoms/:id')
-  async deleteFandom() {}
+  @ApiOperation({
+    summary: '팬덤 삭제',
+  })
+  @ApiParam({
+    name: 'id',
+    required: true,
+  })
+  async deleteFandom(
+    @Param('id') id: number,
+    @User('id') userId: DeleteFandomDto,
+  ) {
+    await this.fandomService.deleteFandom({ id, ...userId });
+  }
 
   @Get('feeds')
   async getFeeds() {}

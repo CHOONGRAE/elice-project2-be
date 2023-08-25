@@ -1,4 +1,5 @@
 import { CreateFandomDto } from '@dto/fandomDto/create-fandom.dto';
+import { DeleteFandomDto } from '@dto/fandomDto/delete-fandom.dto';
 import { UpdateFandomDto } from '@dto/fandomDto/update-fandom.dto';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
@@ -64,14 +65,20 @@ export class FandomService {
     return { data: updatedFandom };
   }
 
-  async deleteFandom(fandomId: number) {
-    const deletedFandom = await this.prisma.fandoms.delete({
-      where: {
-        id: fandomId,
-      },
-    });
-
-    return { data: deletedFandom };
+  async deleteFandom(deleteFandomDto: DeleteFandomDto) {
+    await this.prisma.fandoms
+      .update({
+        where: {
+          ...deleteFandomDto,
+          deletedAt: null,
+        },
+        data: {
+          deletedAt: new Date().toISOString(),
+        },
+      })
+      .catch(() => {
+        throw new ForbiddenException();
+      });
   }
 
   async getFandoms() {
