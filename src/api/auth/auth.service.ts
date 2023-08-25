@@ -95,14 +95,30 @@ export class AuthService {
 
   async signin({ email, password }: SigninDto) {
     const exUser = await this.prisma.auth.findMany({
-      where: { email },
+      where: {
+        email,
+        user: {
+          some: {
+            authId: { not: null },
+          },
+        },
+      },
+      select: {
+        password: true,
+        user: {
+          select: { id: true },
+        },
+      },
     });
 
     if (!exUser.length) {
       throw new UnauthorizedException();
     }
 
-    const { id, password: hashedPassword } = exUser[0];
+    const {
+      user: [{ id }],
+      password: hashedPassword,
+    } = exUser[0];
 
     const isValidated = await bcrypt.compare(password, hashedPassword);
 
