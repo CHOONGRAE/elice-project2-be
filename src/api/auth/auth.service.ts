@@ -146,7 +146,10 @@ export class AuthService {
   private async createTokens(id: number, email: string) {
     const refreshKey = await bcrypt.hash(email, 10);
 
-    const accessToken = await this.jwt.signAsync({ sub: id });
+    const accessToken = await this.jwt.signAsync(
+      { sub: id },
+      { expiresIn: (EXPIRE_REFESH_TOKEN * 2) / 1000 },
+    );
 
     const refreshToken = await this.jwt.signAsync(
       { sub: id, email, key: refreshKey },
