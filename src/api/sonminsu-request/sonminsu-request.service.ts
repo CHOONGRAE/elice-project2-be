@@ -7,7 +7,6 @@ import { Prisma } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { PrismaService } from '@prisma/prisma.service';
 import { S3Service } from 'src/s3/s3.service';
-import { getDatePath } from 'src/utils/getDatePath';
 
 @Injectable()
 export class SonminsuRequestService {
@@ -33,11 +32,66 @@ export class SonminsuRequestService {
           artistName,
           images: {
             create: {
-              url: (await this.s3.uploadImage(image, getDatePath())) as string,
+              url: await this.s3.uploadImage(
+                image,
+                `requests/author-${userId}/`,
+              ),
             },
           },
         },
-        select: this.detailSelectField,
+        select: {
+          id: true,
+          user: {
+            select: {
+              id: true,
+              nickName: true,
+            },
+          },
+          images: {
+            select: {
+              url: true,
+            },
+          },
+          _count: {
+            select: {
+              answers: {
+                where: {
+                  deletedAt: null,
+                },
+              },
+            },
+          },
+          answers: {
+            orderBy: {
+              createdAt: 'desc',
+            },
+            select: {
+              id: true,
+              user: {
+                select: {
+                  id: true,
+                  profileImgUrl: true,
+                  nickName: true,
+                  _count: {
+                    select: {
+                      sonminsuAnswers: {
+                        where: { isChoosed: true },
+                      },
+                    },
+                  },
+                },
+              },
+              items: {
+                select: {
+                  id: true,
+                  originUrl: true,
+                  imgUrl: true,
+                  price: true,
+                },
+              },
+            },
+          },
+        },
       });
 
     return {

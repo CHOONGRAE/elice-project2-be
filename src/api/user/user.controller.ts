@@ -32,6 +32,8 @@ import { User } from '@decorator/User.decorator';
 import { SonminsuRequestService } from '@api/sonminsu-request/sonminsu-request.service';
 import { GetSonminsuRequestDto } from '@dto/sonminsuRequestDto/get-sonmisuRequest.dto';
 import { PaginateSonminsuRequestDto } from '@dto/sonminsuRequestDto/paginate-sonminsuRequest.dto';
+import { SonminsuRequestBookmarkService } from '@api/sonminsu-request-bookmark/sonminsu-request-bookmark.service';
+import { CreateSonminsuRequestDto } from '@dto/sonminsuRequestDto/create-sonminsuRequest.dto';
 
 @Controller({
   path: 'users',
@@ -45,6 +47,7 @@ export class UserController {
     private readonly userService: UserService,
     private readonly fandomService: FandomService,
     private readonly sonminsuRequestSevice: SonminsuRequestService,
+    private readonly sonminsuRequestBookmarkService: SonminsuRequestBookmarkService,
   ) {}
 
   @Get('fandoms')
@@ -162,6 +165,34 @@ export class UserController {
     );
   }
 
+  @Post('sonminsu-requests')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      fileFilter: (req, file, cb) => {
+        if (/image/i.test(file.mimetype)) {
+          file.originalname = Buffer.from(file.originalname, 'latin1').toString(
+            'utf-8',
+          );
+          cb(null, true);
+        } else cb(new BadRequestException(), true);
+      },
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: '의뢰 작성',
+  })
+  async createSonminsuRequest(
+    @User('sub') userId: number,
+    @UploadedFile() image: Express.Multer.File,
+    @Body() createSonminsuRequestDto: CreateSonminsuRequestDto,
+  ) {
+    return await this.sonminsuRequestSevice.createSonminsuRequest(userId, {
+      ...createSonminsuRequestDto,
+      image,
+    });
+  }
+
   @Get('sonminsu-requests/bookmarks')
   @ApiOperation({
     summary: '본인이 찜한 의뢰 목록',
@@ -177,7 +208,21 @@ export class UserController {
   }
 
   @Get('sonminsu-requests/bookmarks/:id/toggle')
-  async toggleSonminsuRequestBookmark() {}
+  @ApiOperation({
+    summary: '의뢰 북마크',
+  })
+  @ApiParam({
+    name: 'id',
+    required: true,
+  })
+  async toggleSonminsuRequestBookmark(
+    @User('sub') userId: number,
+    @Param('id') requestId: number,
+  ) {
+    await this.sonminsuRequestBookmarkService.changeSonminsuRequestBookmarkStatus(
+      { userId, requestId },
+    );
+  }
 
   // @Get('follows')
   // async getFollows() {}
