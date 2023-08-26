@@ -26,36 +26,68 @@ export class FeedService {
       image,
       sonminsuItems,
     } = createFeedDto;
-    const createdFeed = await this.prisma.feeds.create({
-      data: {
-        userId,
-        fandomId,
-        content,
-        groupName,
-        artistName,
-        images: {
-          create: [
-            {
-              url: (await this.s3.uploadImage(image)) as string,
+
+    const { images, tags, _count, ...createdFeed } =
+      await this.prisma.feeds.create({
+        data: {
+          userId,
+          fandomId,
+          content,
+          groupName,
+          artistName,
+          images: {
+            create: [
+              {
+                url: await this.s3.uploadImage(image),
+              },
+            ],
+          },
+          tags: {
+            create: await this.createHashTags(hashTags || []),
+          },
+          sonminsuItems: {
+            connect: (sonminsuItems || []).map((id) => ({ id })),
+          },
+        },
+        select: {
+          id: true,
+          content: true,
+          images: true,
+          createdAt: true,
+          tags: {
+            select: {
+              hashTag: {
+                select: {
+                  tag: true,
+                },
+              },
             },
-          ],
+          },
+          sonminsuItems: {
+            select: {
+              id: true,
+            },
+          },
+          _count: {
+            select: {
+              comments: {
+                where: {
+                  deletedAt: null,
+                },
+              },
+            },
+          },
         },
-        tags: {
-          create: await this.createHashTags(hashTags),
-        },
+      });
+
+    return {
+      data: {
+        ...createdFeed,
+        image: images[0].url,
+        tags: tags.map(({ hashTag }) => hashTag.tag),
+        comments: _count.comments,
       },
-    });
-
-    await Promise.all(
-      sonminsuItems.map((id) =>
-        this.sonminsuItem.updateSonminsuItem(id, {
-          feedId: createdFeed.id,
-          registration: true,
-        }),
-      ),
-    );
-
-    return createdFeed;
+    };
   }
 
   async updateFeed(updateFeedDto: UpdateFeedDto) {

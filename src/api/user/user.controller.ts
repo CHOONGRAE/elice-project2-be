@@ -16,6 +16,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiConsumes,
   ApiOperation,
   ApiParam,
@@ -39,6 +40,8 @@ import { PaginateFandomDto } from '@dto/fandomDto/paginate-fandom.dto';
 import { SubscribeService } from '@api/subscribe/subscribe.service';
 import { FollowService } from '@api/follow/follow.service';
 import { FollowDto } from '@dto/followDto/follow.dto';
+import { CreateFeedDto } from '@dto/feedDto/create-feed.dto';
+import { FeedService } from '@api/feed/feed.service';
 
 @Controller({
   path: 'users',
@@ -54,6 +57,7 @@ export class UserController {
     private readonly subscribeService: SubscribeService,
     private readonly sonminsuRequestSevice: SonminsuRequestService,
     private readonly sonminsuRequestBookmarkService: SonminsuRequestBookmarkService,
+    private readonly feedService: FeedService,
     private readonly followService: FollowService,
   ) {}
 
@@ -260,6 +264,65 @@ export class UserController {
       { userId, requestId },
     );
   }
+
+  @Get('feeds')
+  @ApiOperation({
+    summary: '내 피드 목록',
+  })
+  async getFeedsByUser(@User() userId: number) {}
+
+  @Post('feeds')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      fileFilter: (req, file, cb) => {
+        if (/image/i.test(file.mimetype)) {
+          file.originalname = Buffer.from(file.originalname, 'latin1').toString(
+            'utf-8',
+          );
+          cb(null, true);
+        } else cb(new BadRequestException(), true);
+      },
+    }),
+  )
+  @ApiOperation({
+    summary: '피드 생성',
+  })
+  async createFeed(
+    @User() userId: number,
+    @UploadedFile() image: Express.Multer.File,
+    @Body() createFeedDto: CreateFeedDto,
+  ) {
+    return await this.feedService.createFeed(userId, {
+      ...createFeedDto,
+      image,
+    });
+  }
+
+  @Patch('feeds')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      fileFilter: (req, file, cb) => {
+        if (/image/i.test(file.mimetype)) {
+          file.originalname = Buffer.from(file.originalname, 'latin1').toString(
+            'utf-8',
+          );
+          cb(null, true);
+        } else cb(new BadRequestException(), true);
+      },
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: '피드 수정',
+  })
+  async updateFeed(@User() userId: number) {}
+
+  @Delete('feeds')
+  @ApiOperation({
+    summary: '피드 삭제',
+  })
+  async deleteFeed(@User() userId: number) {}
 
   // @Get('follows')
   // async getFollows() {}
