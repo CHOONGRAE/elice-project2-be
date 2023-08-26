@@ -35,6 +35,7 @@ import { PaginateSonminsuRequestDto } from '@dto/sonminsuRequestDto/paginate-son
 import { SonminsuRequestBookmarkService } from '@api/sonminsu-request-bookmark/sonminsu-request-bookmark.service';
 import { CreateSonminsuRequestDto } from '@dto/sonminsuRequestDto/create-sonminsuRequest.dto';
 import { UpdateSonminsuRequestDto } from '@dto/sonminsuRequestDto/update-sonminsuRequest.dto';
+import { PaginateFandomDto } from '@dto/fandomDto/paginate-fandom.dto';
 
 @Controller({
   path: 'users',
@@ -55,13 +56,16 @@ export class UserController {
   @ApiOperation({
     summary: '가입한 팬덤 목록',
   })
-  async getFandoms(@User() id: number) {
-    return await this.fandomService.getFandomsByUser(id);
+  async getFandoms(
+    @User() id: number,
+    @Query() paginateFandomDto: PaginateFandomDto,
+  ) {
+    return await this.fandomService.getFandomsByUser(id, paginateFandomDto);
   }
 
   @Post('fandoms')
   @UseInterceptors(
-    FileInterceptor('image', {
+    FileInterceptor('file', {
       fileFilter: (req, file, cb) => {
         if (/image/i.test(file.mimetype)) {
           file.originalname = Buffer.from(file.originalname, 'latin1').toString(
@@ -81,7 +85,6 @@ export class UserController {
     @User() userId: number,
     @Body() createFandomDto: CreateFandomDto,
   ) {
-    console.log(userId);
     return await this.fandomService.createFandom({
       userId,
       ...createFandomDto,
@@ -91,7 +94,7 @@ export class UserController {
 
   @Patch('fandoms/:fandomId')
   @UseInterceptors(
-    FileInterceptor('image', {
+    FileInterceptor('file', {
       fileFilter: (req, file, cb) => {
         if (/image/i.test(file.mimetype)) {
           file.originalname = Buffer.from(file.originalname, 'latin1').toString(
