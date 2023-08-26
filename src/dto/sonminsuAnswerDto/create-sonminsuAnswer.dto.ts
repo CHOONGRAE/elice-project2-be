@@ -11,6 +11,4 @@ export class CreateSonminsuAnswerDto extends PartialType(SonminsuAnswerEntity) {
   @IsNumber({}, { each: true })
   @ApiProperty()
   itemIds: number[];
-
-  content?: string;
 }
