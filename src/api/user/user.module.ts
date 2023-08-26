@@ -5,6 +5,7 @@ import { FandomModule } from '@api/fandom/fandom.module';
 import { SonminsuRequestModule } from '@api/sonminsu-request/sonminsu-request.module';
 import { SonminsuRequestBookmarkModule } from '@api/sonminsu-request-bookmark/sonminsu-request-bookmark.module';
 import { SubscribeModule } from '@api/subscribe/subscribe.module';
+import { FollowModule } from '@api/follow/follow.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { SubscribeModule } from '@api/subscribe/subscribe.module';
     SubscribeModule,
     SonminsuRequestModule,
     SonminsuRequestBookmarkModule,
+    FollowModule,
   ],
   providers: [UserService],
   controllers: [UserController],

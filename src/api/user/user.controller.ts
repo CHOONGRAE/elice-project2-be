@@ -37,6 +37,8 @@ import { CreateSonminsuRequestDto } from '@dto/sonminsuRequestDto/create-sonmins
 import { UpdateSonminsuRequestDto } from '@dto/sonminsuRequestDto/update-sonminsuRequest.dto';
 import { PaginateFandomDto } from '@dto/fandomDto/paginate-fandom.dto';
 import { SubscribeService } from '@api/subscribe/subscribe.service';
+import { FollowService } from '@api/follow/follow.service';
+import { FollowDto } from '@dto/followDto/follow.dto';
 
 @Controller({
   path: 'users',
@@ -52,6 +54,7 @@ export class UserController {
     private readonly subscribeService: SubscribeService,
     private readonly sonminsuRequestSevice: SonminsuRequestService,
     private readonly sonminsuRequestBookmarkService: SonminsuRequestBookmarkService,
+    private readonly followService: FollowService,
   ) {}
 
   @Get('fandoms')
@@ -266,4 +269,15 @@ export class UserController {
 
   // @Put('follows/toggle/:id')
   // async toggleFollow() {}
+
+  @Put('follow/:followId/')
+  @ApiOperation({
+    summary: '팔로우 상태 변경',
+  })
+  async toggleFollow(
+    @User() userId: number,
+    @Param('followId') followId: number,
+  ) {
+    await this.followService.changeFollowStatus({ userId, followId });
+  }
 }
