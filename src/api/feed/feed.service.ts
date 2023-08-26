@@ -3,7 +3,7 @@ import { SonminsuItemService } from '@api/sonminsu-item/sonminsu-item.service';
 import { CreateFeedDto } from '@dto/feedDto/create-feed.dto';
 import { PaginateFeedDto } from '@dto/feedDto/paginate-feed.dto';
 import { UpdateFeedDto } from '@dto/feedDto/update-feed.dto';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 import { S3Service } from 'src/s3/s3.service';
 
@@ -36,11 +36,9 @@ export class FeedService {
           groupName,
           artistName,
           images: {
-            create: [
-              {
-                url: await this.s3.uploadImage(image),
-              },
-            ],
+            create: {
+              url: await this.s3.uploadImage(image, `feeds/author-${userId}/`),
+            },
           },
           tags: {
             create: await this.createHashTags(hashTags || []),
@@ -54,6 +52,19 @@ export class FeedService {
           content: true,
           images: true,
           createdAt: true,
+          author: {
+            select: {
+              id: true,
+              image: true,
+              nickName: true,
+            },
+          },
+          fandom: {
+            select: {
+              id: true,
+              fandomName: true,
+            },
+          },
           tags: {
             select: {
               hashTag: {
@@ -90,41 +101,102 @@ export class FeedService {
     };
   }
 
-  async updateFeed(updateFeedDto: UpdateFeedDto) {
-    const { feedId, content, hashTags, sonminsuItems } = updateFeedDto;
+  async updateFeed(
+    userId: number,
+    feedId: number,
+    updateFeedDto: UpdateFeedDto,
+  ) {
+    const { content, hashTags, sonminsuItems } = updateFeedDto;
 
-    const updatedFeed = await this.prisma.feeds.update({
-      where: {
-        id: feedId,
-      },
-      data: {
-        content,
-        tags: {
-          create: await this.createHashTags(hashTags),
+    const { images, tags, _count, ...updatedFeed } = await this.prisma.feeds
+      .update({
+        where: {
+          id: feedId,
+          userId,
+          deletedAt: null,
         },
+        data: {
+          content,
+          tags: {
+            deleteMany: {},
+            create: await this.createHashTags(hashTags || []),
+          },
+          sonminsuItems: {
+            connect: (sonminsuItems || []).map((id) => ({ id })),
+          },
+        },
+        select: {
+          id: true,
+          content: true,
+          images: true,
+          createdAt: true,
+          author: {
+            select: {
+              id: true,
+              image: true,
+              nickName: true,
+            },
+          },
+          fandom: {
+            select: {
+              id: true,
+              fandomName: true,
+            },
+          },
+          tags: {
+            select: {
+              hashTag: {
+                select: {
+                  tag: true,
+                },
+              },
+            },
+          },
+          sonminsuItems: {
+            select: {
+              id: true,
+            },
+          },
+          _count: {
+            select: {
+              comments: {
+                where: {
+                  deletedAt: null,
+                },
+              },
+            },
+          },
+        },
+      })
+      .catch(() => {
+        throw new BadRequestException();
+      });
+
+    return {
+      data: {
+        ...updatedFeed,
+        image: images[0].url,
+        tags: tags.map(({ hashTag }) => hashTag.tag),
+        comments: _count.comments,
       },
-    });
-
-    await Promise.all(
-      sonminsuItems.map((id) =>
-        this.sonminsuItem.updateSonminsuItem(id, {
-          feedId: feedId,
-          registration: true,
-        }),
-      ),
-    );
-
-    return updatedFeed;
+    };
   }
 
-  async deleteFeed(feedId: number) {
-    const deletedFeed = await this.prisma.feeds.delete({
-      where: {
-        id: feedId,
-      },
-    });
-
-    return deletedFeed;
+  async deleteFeed(feedId: number, userId: number) {
+    await this.prisma.feeds
+      .update({
+        where: {
+          id: feedId,
+          userId,
+          deletedAt: null,
+        },
+        data: {
+          deletedAt: new Date().toISOString(),
+        },
+      })
+      .catch(() => {
+        throw new BadRequestException();
+      });
   }
 
   async getFeeds(pagination: PaginateFeedDto) {

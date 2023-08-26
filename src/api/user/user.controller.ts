@@ -42,6 +42,7 @@ import { FollowService } from '@api/follow/follow.service';
 import { FollowDto } from '@dto/followDto/follow.dto';
 import { CreateFeedDto } from '@dto/feedDto/create-feed.dto';
 import { FeedService } from '@api/feed/feed.service';
+import { UpdateFeedDto } from '@dto/feedDto/update-feed.dto';
 
 @Controller({
   path: 'users',
@@ -299,30 +300,25 @@ export class UserController {
     });
   }
 
-  @Patch('feeds')
-  @UseInterceptors(
-    FileInterceptor('image', {
-      fileFilter: (req, file, cb) => {
-        if (/image/i.test(file.mimetype)) {
-          file.originalname = Buffer.from(file.originalname, 'latin1').toString(
-            'utf-8',
-          );
-          cb(null, true);
-        } else cb(new BadRequestException(), true);
-      },
-    }),
-  )
-  @ApiConsumes('multipart/form-data')
+  @Patch('feeds/:feedId')
   @ApiOperation({
     summary: '피드 수정',
   })
-  async updateFeed(@User() userId: number) {}
+  async updateFeed(
+    @User() userId: number,
+    @Param('feedId') feedId: number,
+    @Body() updateFeedDto: UpdateFeedDto,
+  ) {
+    return await this.feedService.updateFeed(userId, feedId, updateFeedDto);
+  }
 
-  @Delete('feeds')
+  @Delete('feeds/:feedId')
   @ApiOperation({
     summary: '피드 삭제',
   })
-  async deleteFeed(@User() userId: number) {}
+  async deleteFeed(@User() userId: number, @Param('feedId') feedId: number) {
+    await this.feedService.deleteFeed(feedId, userId);
+  }
 
   // @Get('follows')
   // async getFollows() {}

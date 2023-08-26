@@ -1,25 +1,18 @@
-import { PartialType } from '@nestjs/swagger';
+import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
 import { CreateFeedDto } from './create-feed.dto';
-import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
-import { Transform } from 'class-transformer';
 
-export class UpdateFeedDto extends PartialType(CreateFeedDto) {
-  @IsNumber()
-  feedId: number;
+export class UpdateFeedDto extends OmitType(PartialType(CreateFeedDto), [
+  'fandomId',
+  'image',
+  'groupName',
+  'artistName',
+] as const) {
+  @ApiProperty()
+  content: string;
 
-  @IsOptional()
-  @IsString()
-  content?: string;
+  @ApiProperty({ type: 'array', items: { type: 'string' }, required: false })
+  hashTags: string[];
 
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  @Transform(({ value }) => value.map(String))
-  hashTags?: string[];
-
-  @IsOptional()
-  @IsArray()
-  @IsNumber({}, { each: true })
-  @Transform(({ value }) => value.map(Number))
-  sonminsuItems?: number[];
+  @ApiProperty({ type: 'array', items: { type: 'number' }, required: false })
+  sonminsuItems: number[];
 }
