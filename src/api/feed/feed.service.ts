@@ -27,10 +27,6 @@ export class FeedService {
       sonminsuItems,
     } = createFeedDto;
     const createdFeed = await this.prisma.feeds.create({
-      include: {
-        fandoms: true,
-        // 조인 처리
-      },
       data: {
         userId,
         fandomId,

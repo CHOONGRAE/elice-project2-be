@@ -74,19 +74,12 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const { id } = await this.prisma.auth.create({
-      include: {
-        user: true,
-      },
       data: {
         email,
         password: hashedPassword,
-        user: {
-          create: {
-            userName,
-            birthDate,
-            phoneNumber,
-          },
-        },
+        userName,
+        birthDate,
+        phoneNumber,
       },
     });
 
@@ -97,7 +90,7 @@ export class AuthService {
     const exUser = await this.prisma.auth.findMany({
       where: {
         email,
-        user: {
+        users: {
           some: {
             authId: { not: null },
           },
@@ -105,7 +98,7 @@ export class AuthService {
       },
       select: {
         password: true,
-        user: {
+        users: {
           select: { id: true },
         },
       },
@@ -116,7 +109,7 @@ export class AuthService {
     }
 
     const {
-      user: [{ id }],
+      users: [{ id }],
       password: hashedPassword,
     } = exUser[0];
 

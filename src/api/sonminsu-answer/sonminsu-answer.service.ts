@@ -17,7 +17,6 @@ export class SonminsuAnswerService {
       data: {
         userId,
         requestId,
-        content: 'test',
         items: {
           connect: itemIds.map((id) => ({ id })),
         },

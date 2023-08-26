@@ -22,5 +22,5 @@ export class UpdateFandomDto extends PartialType(FandomEntity) {
 
   //   @IsOptional()
   @ApiProperty({ type: 'string', format: 'binary', required: false })
-  image?: Express.Multer.File;
+  file?: Express.Multer.File;
 }

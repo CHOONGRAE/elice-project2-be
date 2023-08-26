@@ -13,5 +13,5 @@ export class CreateFandomDto extends PartialType(FandomEntity) {
   fandomName: string;
 
   @ApiProperty({ type: 'string', format: 'binary' })
-  image: Express.Multer.File;
+  file: Express.Multer.File;
 }

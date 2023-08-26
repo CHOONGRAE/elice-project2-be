@@ -189,9 +189,6 @@ export class SonminsuRequestService {
         },
         select: {
           requrest: {
-            where: {
-              deletedAt: null,
-            },
             select: this.listSelectField,
           },
         },
@@ -282,7 +279,7 @@ export class SonminsuRequestService {
           user: {
             select: {
               id: true,
-              profileImgUrl: true,
+              image: true,
               nickName: true,
               _count: {
                 select: {

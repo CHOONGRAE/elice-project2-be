@@ -13,7 +13,11 @@ export class SonminsuItemService {
     private readonly scraper: ScraperService,
   ) {}
 
-  async createSonminsuItem({ originUrl }: CreateSonminsuItemDto) {
+  async createSonminsuItem({
+    originUrl,
+    groupName,
+    artistName,
+  }: CreateSonminsuItemDto) {
     const { image, title, price, url } = await this.scraper.doScrap(originUrl);
     const result = await this.prisma.sonminsuItems.create({
       data: {
@@ -21,6 +25,8 @@ export class SonminsuItemService {
         title: title,
         price: price || '정보없음',
         originUrl: url,
+        groupName,
+        artistName,
       },
     });
     return {
