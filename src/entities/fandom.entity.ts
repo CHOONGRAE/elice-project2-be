@@ -4,7 +4,7 @@ export class FandomEntity implements Fandoms {
   id: number;
   userId: number;
   fandomName: string;
-  thumbnailImgUrl: string;
+  image: string;
   createdAt: Date;
   deletedAt: Date;
 }

@@ -77,7 +77,7 @@ export class UserController {
     summary: '팬덤 생성',
   })
   async createFandom(
-    @UploadedFile() image: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File,
     @User() userId: number,
     @Body() createFandomDto: CreateFandomDto,
   ) {
@@ -85,7 +85,7 @@ export class UserController {
     return await this.fandomService.createFandom({
       userId,
       ...createFandomDto,
-      image,
+      file,
     });
   }
 
@@ -107,7 +107,7 @@ export class UserController {
     summary: '팬덤 수정',
   })
   async updateFandom(
-    @UploadedFile() image: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File,
     @Param('fandomId') id: number,
     @User() userId: number,
     @Body()
@@ -117,7 +117,7 @@ export class UserController {
       id,
       userId,
       ...updateFandomDto,
-      image,
+      file,
     });
   }
 

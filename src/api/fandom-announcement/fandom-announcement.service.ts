@@ -26,7 +26,7 @@ export class FandomAnnouncementService {
             select: {
               id: true,
               nickName: true,
-              profileImgUrl: true,
+              image: true,
             },
           },
           fandom: {
@@ -57,7 +57,7 @@ export class FandomAnnouncementService {
             select: {
               id: true,
               nickName: true,
-              profileImgUrl: true,
+              image: true,
             },
           },
           fandom: {
@@ -97,7 +97,7 @@ export class FandomAnnouncementService {
           select: {
             id: true,
             nickName: true,
-            profileImgUrl: true,
+            image: true,
           },
         },
         fandom: {

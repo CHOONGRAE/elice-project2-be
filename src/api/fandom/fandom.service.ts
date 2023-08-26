@@ -15,7 +15,7 @@ export class FandomService {
   ) {}
 
   async createFandom(createFandomDto: CreateFandomDto) {
-    const { userId, fandomName, image } = createFandomDto;
+    const { userId, fandomName, file } = createFandomDto;
 
     const {
       messages,
@@ -25,10 +25,7 @@ export class FandomService {
       data: {
         userId,
         fandomName,
-        thumbnailImgUrl: await this.s3.uploadImage(
-          image,
-          `fandoms/admin-${userId}/`,
-        ),
+        image: await this.s3.uploadImage(file, `fandoms/admin-${userId}/`),
         subscribes: {
           create: {
             userId,
@@ -53,7 +50,7 @@ export class FandomService {
   }
 
   async updateFandom(updateFandomDto: UpdateFandomDto) {
-    const { id, userId, fandomName, image } = updateFandomDto;
+    const { id, userId, fandomName, file } = updateFandomDto;
 
     const {
       messages,
@@ -68,9 +65,9 @@ export class FandomService {
         },
         data: {
           fandomName,
-          thumbnailImgUrl:
-            image &&
-            (await this.s3.uploadImage(image, `fandoms/admin-${userId}/`)),
+          image:
+            file &&
+            (await this.s3.uploadImage(file, `fandoms/admin-${userId}/`)),
         },
         select: this.selectField,
       })
@@ -141,13 +138,13 @@ export class FandomService {
         ({
           id,
           fandomName,
-          thumbnailImgUrl,
+          image,
           _count: { subscribes: memberLength },
           messages,
         }) => ({
           id,
           fandomName,
-          thumbnailImgUrl,
+          image,
           memberLength,
           lastChatTime: messages[0]?.createdAt || null,
         }),
@@ -185,7 +182,7 @@ export class FandomService {
         {
           id,
           fandomName,
-          thumbnailImgUrl,
+          image,
           _count: { subscribes: memberLength },
           messages,
         },
@@ -194,7 +191,7 @@ export class FandomService {
         id,
         rank: i + 1,
         fandomName,
-        thumbnailImgUrl,
+        image,
         memberLength,
         lastChatTime: messages[0]?.createdAt || null,
       }),
@@ -204,7 +201,7 @@ export class FandomService {
   private readonly selectField: Prisma.FandomsSelect<DefaultArgs> = {
     id: true,
     fandomName: true,
-    thumbnailImgUrl: true,
+    image: true,
     _count: {
       select: {
         subscribes: {
