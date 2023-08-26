@@ -36,6 +36,7 @@ import { SonminsuRequestBookmarkService } from '@api/sonminsu-request-bookmark/s
 import { CreateSonminsuRequestDto } from '@dto/sonminsuRequestDto/create-sonminsuRequest.dto';
 import { UpdateSonminsuRequestDto } from '@dto/sonminsuRequestDto/update-sonminsuRequest.dto';
 import { PaginateFandomDto } from '@dto/fandomDto/paginate-fandom.dto';
+import { SubscribeService } from '@api/subscribe/subscribe.service';
 
 @Controller({
   path: 'users',
@@ -48,6 +49,7 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly fandomService: FandomService,
+    private readonly subscribeService: SubscribeService,
     private readonly sonminsuRequestSevice: SonminsuRequestService,
     private readonly sonminsuRequestBookmarkService: SonminsuRequestBookmarkService,
   ) {}
@@ -132,6 +134,17 @@ export class UserController {
     await this.fandomService.deleteFandom({ id, userId });
   }
 
+  @Put('fandoms/:fandomId/subscribe')
+  @ApiOperation({
+    summary: '팬덤 구독 상태 변경',
+  })
+  async toggleFandomSubscribe(
+    @User() userId: number,
+    @Param('fandomId') fandomId: number,
+  ) {
+    await this.subscribeService.changeLikeStatus({ userId, fandomId });
+  }
+
   // @Get('feeds')
   // async getFeeds() {}
 
@@ -146,7 +159,6 @@ export class UserController {
 
   // @Delete('feeds/:id')
   // async deleteFeed() {}
-
   @Get('sonminsu-requests')
   @ApiOperation({
     summary: '본인이 의뢰한 목록',
@@ -233,7 +245,7 @@ export class UserController {
     );
   }
 
-  @Put('sonminsu-requests/:requestId/bookmarks/toggle')
+  @Put('sonminsu-requests/:requestId/bookmarks')
   @ApiOperation({
     summary: '의뢰 북마크',
   })
