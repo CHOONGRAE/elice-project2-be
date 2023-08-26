@@ -6,6 +6,7 @@ import { PrismaService } from '@prisma/prisma.service';
 import { S3Service } from 'src/s3/s3.service';
 import { Prisma } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
+import { PaginateFandomDto } from '@dto/fandomDto/paginate-fandom.dto';
 
 @Injectable()
 export class FandomService {
@@ -33,7 +34,7 @@ export class FandomService {
         },
         rank: {
           create: {
-            point: 1,
+            point: 0,
           },
         },
       },
@@ -100,41 +101,57 @@ export class FandomService {
       });
   }
 
-  async getFandoms() {
-    const fandoms = await this.makeSortedFandoms();
+  async getFandoms(paginateFandomDto: PaginateFandomDto) {
+    const result = await this.makeSortedFandoms(paginateFandomDto);
 
-    return { data: fandoms };
+    return result;
   }
 
   async getHotFandoms() {
-    const fandoms = await this.makeSortedFandoms(4);
+    const result = await this.makeSortedFandoms({ perPage: 4, page: 0 });
 
-    return { data: fandoms };
+    return { data: result.data };
   }
 
-  async getFandomsByUser(userId: number) {
-    const userFandoms = await this.prisma.fandoms.findMany({
-      where: {
-        deletedAt: null,
-        subscribes: {
-          some: {
-            userId,
+  async getFandomsByUser(userId: number, paginateFandomDto: PaginateFandomDto) {
+    const { page, perPage } = paginateFandomDto;
+
+    const [result, totalCount] = await this.prisma.$transaction([
+      this.prisma.fandoms.findMany({
+        skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
+        take: Math.max(0, perPage || 10),
+        where: {
+          deletedAt: null,
+          subscribes: {
+            some: {
+              userId,
+            },
           },
         },
-      },
-      select: this.selectField,
-      orderBy: [
-        {
-          rank: {
-            point: 'asc',
+        select: this.selectField,
+        orderBy: [
+          {
+            rank: {
+              point: 'asc',
+            },
+          },
+          { createdAt: 'asc' },
+        ],
+      }),
+      this.prisma.fandoms.count({
+        where: {
+          deletedAt: null,
+          subscribes: {
+            some: {
+              userId,
+            },
           },
         },
-        { createdAt: 'asc' },
-      ],
-    });
+      }),
+    ]);
 
     return {
-      data: userFandoms.map(
+      data: result.map(
         ({
           id,
           fandomName,
@@ -149,6 +166,8 @@ export class FandomService {
           lastChatTime: messages[0]?.createdAt || null,
         }),
       ),
+      totalPage: Math.ceil(totalCount / (perPage || 10)),
+      currentPage: page || 1,
     };
   }
 
@@ -156,46 +175,63 @@ export class FandomService {
     const searchResult = await this.prisma.fandoms.findMany({
       where: {
         fandomName: { contains: searchString },
+        deletedAt: null,
       },
     });
 
     return { data: searchResult };
   }
 
-  private async makeSortedFandoms(take = 10, skip = 0) {
-    const result = await this.prisma.fandoms.findMany({
-      select: this.selectField,
-      skip,
-      take,
-      orderBy: [
-        {
-          rank: {
-            point: 'desc',
-          },
-        },
-        { createdAt: 'asc' },
-      ],
-    });
+  private async makeSortedFandoms(paginateFandomDto: PaginateFandomDto) {
+    const { page, perPage } = paginateFandomDto;
 
-    return result.map(
-      (
-        {
+    const [result, totalCount] = await this.prisma.$transaction([
+      this.prisma.fandoms.findMany({
+        where: {
+          deletedAt: null,
+        },
+        select: this.selectField,
+        skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
+        take: Math.max(0, perPage || 10),
+        orderBy: [
+          {
+            rank: {
+              point: 'desc',
+            },
+          },
+          { createdAt: 'asc' },
+        ],
+      }),
+      this.prisma.fandoms.count({
+        where: {
+          deletedAt: null,
+        },
+      }),
+    ]);
+
+    return {
+      data: result.map(
+        (
+          {
+            id,
+            fandomName,
+            image,
+            _count: { subscribes: memberLength },
+            messages,
+          },
+          i,
+        ) => ({
           id,
+          rank: i + 1,
           fandomName,
           image,
-          _count: { subscribes: memberLength },
-          messages,
-        },
-        i,
-      ) => ({
-        id,
-        rank: i + 1,
-        fandomName,
-        image,
-        memberLength,
-        lastChatTime: messages[0]?.createdAt || null,
-      }),
-    );
+          memberLength,
+          lastChatTime: messages[0]?.createdAt || null,
+        }),
+      ),
+      totalPage: Math.ceil(totalCount / (perPage || 10)),
+      currentPage: page || 1,
+    };
   }
 
   private readonly selectField: Prisma.FandomsSelect<DefaultArgs> = {
