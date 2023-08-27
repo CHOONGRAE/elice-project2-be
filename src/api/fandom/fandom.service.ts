@@ -1,7 +1,11 @@
 import { CreateFandomDto } from '@dto/fandomDto/create-fandom.dto';
 import { DeleteFandomDto } from '@dto/fandomDto/delete-fandom.dto';
 import { UpdateFandomDto } from '@dto/fandomDto/update-fandom.dto';
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 import { S3Service } from 'src/s3/s3.service';
 import { Prisma } from '@prisma/client';
@@ -177,6 +181,7 @@ export class FandomService {
         fandomName: { contains: searchString },
         deletedAt: null,
       },
+      select: this.selectField,
       orderBy: [
         {
           rank: {
@@ -187,7 +192,53 @@ export class FandomService {
       ],
     });
 
-    return { data: searchResult };
+    return {
+      data: searchResult.map(
+        ({
+          id,
+          fandomName,
+          image,
+          _count: { subscribes: memberLength },
+          messages,
+        }) => ({
+          id,
+          fandomName,
+          image,
+          memberLength,
+          lastChatTime: messages[0]?.createdAt || null,
+        }),
+      ),
+    };
+  }
+
+  async getFandomById(fandomId: number) {
+    try {
+      const {
+        id,
+        fandomName,
+        image,
+        _count: { subscribes: memberLength },
+        messages,
+      } = await this.prisma.fandoms.findUnique({
+        where: {
+          id: fandomId,
+          deletedAt: null,
+        },
+        select: this.selectField,
+      });
+
+      return {
+        data: {
+          id,
+          fandomName,
+          image,
+          memberLength,
+          lastChatTime: messages[0]?.createdAt || null,
+        },
+      };
+    } catch (e) {
+      throw new BadRequestException();
+    }
   }
 
   private async makeSortedFandoms(paginateFandomDto: PaginateFandomDto) {

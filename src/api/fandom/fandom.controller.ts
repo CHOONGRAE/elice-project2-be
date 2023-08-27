@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { FandomService } from './fandom.service';
 import { PaginateFandomDto } from '@dto/fandomDto/paginate-fandom.dto';
@@ -33,5 +33,13 @@ export class FandomController {
   })
   async getFandomsBySearch(@Query('search') search: string) {
     return await this.fandomService.getFandomsBySearch(search);
+  }
+
+  @Get(':fandomId')
+  @ApiOperation({
+    summary: '팬덤 단일',
+  })
+  async getFandomById(@Param('fandomId') fandomId: number) {
+    return await this.fandomService.getFandomById(fandomId);
   }
 }
