@@ -8,6 +8,7 @@ import { SubscribeModule } from '@api/subscribe/subscribe.module';
 import { FollowModule } from '@api/follow/follow.module';
 import { FeedModule } from '@api/feed/feed.module';
 import { SonminsuAnswerModule } from '@api/sonminsu-answer/sonminsu-answer.module';
+import { SonminsuItemModule } from '@api/sonminsu-item/sonminsu-item.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { SonminsuAnswerModule } from '@api/sonminsu-answer/sonminsu-answer.modul
     SonminsuRequestModule,
     SonminsuRequestBookmarkModule,
     SonminsuAnswerModule,
+    SonminsuItemModule,
     FeedModule,
     FollowModule,
   ],
