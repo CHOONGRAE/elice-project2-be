@@ -1,5 +1,7 @@
 import { CreateCommentDto } from '@dto/commentDto/create-comment.dto';
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { DefaultArgs } from '@prisma/client/runtime/library';
 import { PrismaService } from '@prisma/prisma.service';
 
 @Injectable()
@@ -67,7 +69,7 @@ export class CommentService {
     return { data: result };
   }
 
-  private readonly selectField = {
+  private readonly selectField: Prisma.CommentsSelect<DefaultArgs> = {
     id: true,
     feedId: true,
     parent: true,
@@ -75,7 +77,7 @@ export class CommentService {
       select: {
         id: true,
         nickName: true,
-        profileImgUrl: true,
+        image: true,
       },
     },
     content: true,
