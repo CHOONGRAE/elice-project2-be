@@ -1,10 +1,10 @@
 import { CreateFandomAnnouncementDto } from '@dto/fandomAnnouncement/create-announcement.dto';
 import { UpdateFandomAnnouncementDto } from '@dto/fandomAnnouncement/update-announcement.dto';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 
 const filter = () =>
-  new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
 @Injectable()
 export class FandomAnnouncementService {
@@ -20,97 +20,88 @@ export class FandomAnnouncementService {
           userId,
           ...createFandomAnnouncementDto,
         },
-        select: {
-          id: true,
-          author: {
-            select: {
-              id: true,
-              nickName: true,
-              image: true,
-            },
-          },
-          fandom: {
-            select: {
-              id: true,
-              fandomName: true,
-            },
-          },
-          content: true,
-          createdAt: true,
-        },
+        select: this.selectField,
       });
 
-    return createdFandomAnnouncement;
+    return { data: createdFandomAnnouncement };
   }
 
   async updateFandomAnnouncement(
     id: number,
+    userId: number,
     updateFandomAnnouncementDto: UpdateFandomAnnouncementDto,
   ) {
     const updatedFandomAnnouncement =
       await this.prisma.fandomAnnouncements.update({
-        where: { id },
-        data: updateFandomAnnouncementDto,
-        select: {
-          id: true,
-          author: {
-            select: {
-              id: true,
-              nickName: true,
-              image: true,
-            },
-          },
-          fandom: {
-            select: {
-              id: true,
-              fandomName: true,
-            },
-          },
-          content: true,
-          createdAt: true,
+        where: {
+          id,
+          userId,
+          deletedAt: null,
         },
+        data: updateFandomAnnouncementDto,
+        select: this.selectField,
       });
 
-    return updatedFandomAnnouncement;
+    return { data: updatedFandomAnnouncement };
   }
 
-  async deleteFandomAnnouncement(id: number) {
-    await this.prisma.fandomAnnouncements.update({
-      where: { id },
-      data: {
-        deletedAt: new Date().toISOString(),
+  async deleteFandomAnnouncement(id: number, userId: number) {
+    await this.prisma.fandomAnnouncements
+      .update({
+        where: {
+          id,
+          userId,
+          deletedAt: null,
+        },
+        data: {
+          deletedAt: new Date().toISOString(),
+        },
+      })
+      .catch(() => {
+        throw new BadRequestException();
+      });
+  }
+
+  async getFandomAnnouncements() {
+    const result = await this.prisma.fandomAnnouncements.findMany({
+      where: {
+        createdAt: { gte: filter() },
+        deletedAt: null,
       },
+      select: this.selectField,
     });
+
+    return { data: result };
   }
 
-  async getFandomAnnouncementById(id: number) {
+  async getFandomAnnouncementsById(id: number) {
     const result = await this.prisma.fandomAnnouncements.findUnique({
       where: {
         id,
-        deletedAt: {
-          not: null,
-        },
+        deletedAt: null,
       },
-      select: {
-        id: true,
-        author: {
-          select: {
-            id: true,
-            nickName: true,
-            image: true,
-          },
-        },
-        fandom: {
-          select: {
-            id: true,
-            fandomName: true,
-          },
-        },
-        content: true,
-        createdAt: true,
-      },
+      select: this.selectField,
     });
 
-    return result;
+    return { data: result };
   }
+
+  private readonly selectField = {
+    id: true,
+    author: {
+      select: {
+        id: true,
+        nickName: true,
+        image: true,
+      },
+    },
+    fandom: {
+      select: {
+        id: true,
+        fandomName: true,
+      },
+    },
+    content: true,
+    createdAt: true,
+  };
 }
