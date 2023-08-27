@@ -22,7 +22,7 @@ export class SonminsuRequestService {
     const { title, content, groupName, artistName, image } =
       createSonminsuRequestDto;
 
-    const { images, ...createdSonminsuRequest } =
+    const { images, _count, ...createdSonminsuRequest } =
       await this.prisma.sonminsuRequests.create({
         data: {
           userId,
@@ -43,7 +43,11 @@ export class SonminsuRequestService {
       });
 
     return {
-      data: { ...createdSonminsuRequest, image: images[0]?.url || null },
+      data: {
+        ...createdSonminsuRequest,
+        image: images[0]?.url || null,
+        answerCnt: _count.answers,
+      },
     };
   }
 
@@ -55,7 +59,7 @@ export class SonminsuRequestService {
     const { title, content, groupName, artistName, image } =
       updateSonminsuRequestDto;
 
-    const { images, ...updatedSonminsuRequest } =
+    const { images, _count, ...updatedSonminsuRequest } =
       await this.prisma.sonminsuRequests.update({
         where: {
           id,
@@ -81,7 +85,11 @@ export class SonminsuRequestService {
       });
 
     return {
-      data: { ...updatedSonminsuRequest, image: images[0]?.url || null },
+      data: {
+        ...updatedSonminsuRequest,
+        image: images[0]?.url || null,
+        answerCnt: _count.answers,
+      },
     };
   }
 
@@ -214,15 +222,22 @@ export class SonminsuRequestService {
   }
 
   async getSonminsuRequest(id: number) {
-    const result = await this.prisma.sonminsuRequests.findUnique({
-      where: {
-        id,
-        deletedAt: null,
-      },
-      select: this.detailSelectField,
-    });
+    const { images, _count, ...result } =
+      await this.prisma.sonminsuRequests.findUnique({
+        where: {
+          id,
+          deletedAt: null,
+        },
+        select: this.detailSelectField,
+      });
 
-    return { data: result };
+    return {
+      data: {
+        image: images[0]?.url || null,
+        ...result,
+        answerCnt: _count.answers,
+      },
+    };
   }
 
   private readonly listSelectField: Prisma.SonminsuRequestsSelect<DefaultArgs> =
