@@ -50,6 +50,8 @@ import { LikeService } from '@api/like/like.service';
 import { FandomAnnouncementService } from '@api/fandom-announcement/fandom-announcement.service';
 import { CreateFandomAnnouncementDto } from '@dto/fandomAnnouncement/create-announcement.dto';
 import { UpdateFandomAnnouncementDto } from '@dto/fandomAnnouncement/update-announcement.dto';
+import { CreateBucketDto } from '@dto/bucketDto/create-bucket.dto';
+import { BucketService } from '@api/bucket/bucket.service';
 
 @Controller({
   path: 'users',
@@ -68,6 +70,7 @@ export class UserController {
     private readonly sonminsuRequestBookmarkService: SonminsuRequestBookmarkService,
     private readonly sonminsuAnswerService: SonminsuAnswerService,
     private readonly sonminsuItemService: SonminsuItemService,
+    private readonly bucketService: BucketService,
     private readonly feedService: FeedService,
     private readonly commentService: CommentService,
     private readonly followService: FollowService,
@@ -371,6 +374,41 @@ export class UserController {
     return await this.sonminsuItemService.createSonminsuItem(
       createSonminuItemDto,
     );
+  }
+
+  @Get('buckets')
+  @ApiOperation({
+    summary: '버킷 목록',
+  })
+  async getBuckets(@User() userId: number) {
+    return await this.bucketService.getBuckets(userId);
+  }
+
+  @Get('buckets/:bucketId')
+  @ApiOperation({
+    summary: '버킷 상세',
+  })
+  async getBucketById(@User() userId: number, @Param('bucketId') id: number) {
+    return await this.bucketService.getBucket(id, userId);
+  }
+
+  @Post('buckets')
+  @ApiOperation({
+    summary: '버킷 생성',
+  })
+  async createBucket(
+    @User() userId: number,
+    @Body() createBucketDto: CreateBucketDto,
+  ) {
+    return await this.bucketService.createBucket(userId, createBucketDto);
+  }
+
+  @Delete('buckets/:bucketId')
+  @ApiOperation({
+    summary: '버킷 삭제',
+  })
+  async deleteBucket(@Param('bucketId') id: number, @User() userId: number) {
+    await this.bucketService.deleteBucket(id, userId);
   }
 
   @Get('feeds')
