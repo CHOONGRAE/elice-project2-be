@@ -150,6 +150,24 @@ export class UserController {
     await this.fandomService.deleteFandom({ id, userId });
   }
 
+  @Post()
+  @ApiOperation({
+    summary: '팬덤 공지 작성',
+  })
+  async createFandomAnnouncement() {}
+
+  @Patch()
+  @ApiOperation({
+    summary: '팬덤 공지 수정',
+  })
+  async updateFandomAnnouncement() {}
+
+  @Delete()
+  @ApiOperation({
+    summary: '팬덤 공지 삭제',
+  })
+  async deleteFandomAnnouncement() {}
+
   @Put('fandoms/:fandomId/subscribe')
   @ApiOperation({
     summary: '팬덤 구독 상태 변경',
