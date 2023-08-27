@@ -309,6 +309,7 @@ export class SonminsuRequestService {
           items: {
             select: {
               id: true,
+              title: true,
               originUrl: true,
               imgUrl: true,
               price: true,
