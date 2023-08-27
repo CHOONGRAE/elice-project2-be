@@ -47,6 +47,9 @@ import { SonminsuItemService } from '@api/sonminsu-item/sonminsu-item.service';
 import { CreateCommentDto } from '@dto/commentDto/create-comment.dto';
 import { CommentService } from '@api/comment/comment.service';
 import { LikeService } from '@api/like/like.service';
+import { FandomAnnouncementService } from '@api/fandom-announcement/fandom-announcement.service';
+import { CreateFandomAnnouncementDto } from '@dto/fandomAnnouncement/create-announcement.dto';
+import { UpdateFandomAnnouncementDto } from '@dto/fandomAnnouncement/update-announcement.dto';
 
 @Controller({
   path: 'users',
@@ -59,6 +62,7 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly fandomService: FandomService,
+    private readonly fandomAnnouncementService: FandomAnnouncementService,
     private readonly subscribeService: SubscribeService,
     private readonly sonminsuRequestSevice: SonminsuRequestService,
     private readonly sonminsuRequestBookmarkService: SonminsuRequestBookmarkService,
@@ -148,6 +152,49 @@ export class UserController {
   })
   async deleteFandom(@Param('fandomId') id: number, @User() userId: number) {
     await this.fandomService.deleteFandom({ id, userId });
+  }
+
+  @Post('fandom-announcements/:fandomId')
+  @ApiOperation({
+    summary: '팬덤 공지 작성',
+  })
+  async createFandomAnnouncement(
+    @User() userId: number,
+    @Param('fandomId') fandomId: number,
+    @Body() createFandomAnnouncementDto: CreateFandomAnnouncementDto,
+  ) {
+    return await this.fandomAnnouncementService.createFandomAnnouncement(
+      userId,
+      fandomId,
+      createFandomAnnouncementDto,
+    );
+  }
+
+  @Patch('fandom-announcements/:announcementId')
+  @ApiOperation({
+    summary: '팬덤 공지 수정',
+  })
+  async updateFandomAnnouncement(
+    @Param('announcementId') id: number,
+    @User() userId: number,
+    @Body() updateFandomAnnouncementDto: UpdateFandomAnnouncementDto,
+  ) {
+    return await this.fandomAnnouncementService.updateFandomAnnouncement(
+      id,
+      userId,
+      updateFandomAnnouncementDto,
+    );
+  }
+
+  @Delete('fandom-announcements/:announcementId')
+  @ApiOperation({
+    summary: '팬덤 공지 삭제',
+  })
+  async deleteFandomAnnouncement(
+    @Param('announcementId') id: number,
+    @User() userId: number,
+  ) {
+    await this.fandomAnnouncementService.deleteFandomAnnouncement(id, userId);
   }
 
   @Put('fandoms/:fandomId/subscribe')

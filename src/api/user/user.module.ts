@@ -11,10 +11,12 @@ import { SonminsuAnswerModule } from '@api/sonminsu-answer/sonminsu-answer.modul
 import { SonminsuItemModule } from '@api/sonminsu-item/sonminsu-item.module';
 import { CommentModule } from '@api/comment/comment.module';
 import { LikeModule } from '@api/like/like.module';
+import { FandomAnnouncementModule } from '@api/fandom-announcement/fandom-announcement.module';
 
 @Module({
   imports: [
     FandomModule,
+    FandomAnnouncementModule,
     SubscribeModule,
     SonminsuRequestModule,
     SonminsuRequestBookmarkModule,
