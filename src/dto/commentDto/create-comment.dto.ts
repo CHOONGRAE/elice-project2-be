@@ -1,16 +1,14 @@
 import { CommentEntity } from '@entities';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateCommentDto extends PartialType(CommentEntity) {
-  @ApiProperty()
-  feedId: number;
-
-  @ApiProperty()
+  @IsOptional()
+  @IsNumber()
+  @ApiProperty({ required: false, default: null })
   parentId: number;
 
-  @ApiProperty()
-  userId: number;
-
+  @IsString()
   @ApiProperty()
   content: string;
 }

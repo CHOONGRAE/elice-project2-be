@@ -1,15 +1,20 @@
 import { CreateCommentDto } from '@dto/commentDto/create-comment.dto';
-import { ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 
 @Injectable()
 export class CommentService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createComment(userId: number, createCommentDto: CreateCommentDto) {
+  async createComment(
+    userId: number,
+    feedId: number,
+    createCommentDto: CreateCommentDto,
+  ) {
     const createdComment = await this.prisma.comments.create({
       data: {
         userId,
+        feedId,
         ...createCommentDto,
       },
       select: this.selectField,
@@ -31,7 +36,7 @@ export class CommentService {
         },
       })
       .catch(() => {
-        throw new ConflictException();
+        throw new BadRequestException();
       });
   }
 
@@ -49,7 +54,13 @@ export class CommentService {
             deletedAt: null,
           },
           select: this.selectField,
+          orderBy: {
+            createdAt: 'desc',
+          },
         },
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
 
