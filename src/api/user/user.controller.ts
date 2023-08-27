@@ -16,12 +16,9 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
-  ApiBody,
   ApiConsumes,
   ApiOperation,
   ApiParam,
-  ApiProperty,
-  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { UserService } from './user.service';
@@ -39,11 +36,13 @@ import { UpdateSonminsuRequestDto } from '@dto/sonminsuRequestDto/update-sonmins
 import { PaginateFandomDto } from '@dto/fandomDto/paginate-fandom.dto';
 import { SubscribeService } from '@api/subscribe/subscribe.service';
 import { FollowService } from '@api/follow/follow.service';
-import { FollowDto } from '@dto/followDto/follow.dto';
 import { CreateFeedDto } from '@dto/feedDto/create-feed.dto';
 import { FeedService } from '@api/feed/feed.service';
 import { UpdateFeedDto } from '@dto/feedDto/update-feed.dto';
 import { PaginateFeedDto } from '@dto/feedDto/paginate-feed.dto';
+import { SonminsuAnswerService } from '@api/sonminsu-answer/sonminsu-answer.service';
+import { CreateSonminsuAnswerDto } from '@dto/sonminsuAnswerDto/create-sonminsuAnswer.dto';
+import { UpdateSonminsuAnswerDto } from '@dto/sonminsuAnswerDto/update-sonminsuAnswer.dto';
 
 @Controller({
   path: 'users',
@@ -59,6 +58,7 @@ export class UserController {
     private readonly subscribeService: SubscribeService,
     private readonly sonminsuRequestSevice: SonminsuRequestService,
     private readonly sonminsuRequestBookmarkService: SonminsuRequestBookmarkService,
+    private readonly sonminsuAnswerService: SonminsuAnswerService,
     private readonly feedService: FeedService,
     private readonly followService: FollowService,
   ) {}
@@ -76,7 +76,7 @@ export class UserController {
 
   @Post('fandoms')
   @UseInterceptors(
-    FileInterceptor('file', {
+    FileInterceptor('image', {
       fileFilter: (req, file, cb) => {
         if (/image/i.test(file.mimetype)) {
           file.originalname = Buffer.from(file.originalname, 'latin1').toString(
@@ -154,20 +154,6 @@ export class UserController {
     await this.subscribeService.changeLikeStatus({ userId, fandomId });
   }
 
-  // @Get('feeds')
-  // async getFeeds() {}
-
-  // @Post('feeds')
-  // async createFeed() {}
-
-  // @Get('feeds/my')
-  // async getMyFeeds() {}
-
-  // @Patch('feeds/:id')
-  // async updateFeed() {}
-
-  // @Delete('feeds/:id')
-  // async deleteFeed() {}
   @Get('sonminsu-requests')
   @ApiOperation({
     summary: '본인이 의뢰한 목록',
@@ -267,6 +253,60 @@ export class UserController {
     );
   }
 
+  @Post('sonminsu-answers/:requestId')
+  @ApiOperation({
+    summary: '의뢰 답변 작성',
+  })
+  async createSonminsuAnswer(
+    @User() userId: number,
+    @Param('requestId') requestId: number,
+    @Body() createSonminsuAnswerDto: CreateSonminsuAnswerDto,
+  ) {
+    await this.sonminsuAnswerService.createSonminsuAnswer(
+      userId,
+      requestId,
+      createSonminsuAnswerDto,
+    );
+  }
+
+  @Patch('sonminsu-answers/:requestId')
+  @ApiOperation({
+    summary: '의뢰 답변 삭제',
+  })
+  async updateSonminsuAnswer(
+    @User() userId: number,
+    @Param('requestId') requestId: number,
+    @Body() updateSonminsuAnswerDto: UpdateSonminsuAnswerDto,
+  ) {
+    await this.sonminsuAnswerService.updateSonminsuAnswer(
+      requestId,
+      userId,
+      updateSonminsuAnswerDto,
+    );
+  }
+
+  @Delete('sonminsu-answers/:requestId')
+  @ApiOperation({
+    summary: '의뢰 답변 삭제',
+  })
+  async deleteSonminsuAnswer(
+    @User() userId: number,
+    @Param('requestId') requestId: number,
+  ) {
+    await this.sonminsuAnswerService.deleteSonminsuAnswer(requestId, userId);
+  }
+
+  @Put('sonminsu-answers/:answerId/choose')
+  @ApiOperation({
+    summary: '의뢰 답변 채택',
+  })
+  async chooseSonminsuAnswer(
+    @User() userId: number,
+    @Param('requestId') answerId: number,
+  ) {
+    await this.sonminsuAnswerService.chooseSonminsuAnswer(answerId, userId);
+  }
+
   @Get('feeds')
   @ApiOperation({
     summary: '피드 목록',
@@ -334,16 +374,7 @@ export class UserController {
     await this.feedService.deleteFeed(feedId, userId);
   }
 
-  // @Get('follows')
-  // async getFollows() {}
-
-  // @Get('followers')
-  // async getFollowers() {}
-
-  // @Put('follows/toggle/:id')
-  // async toggleFollow() {}
-
-  @Put('follow/:followId/')
+  @Put('follows/:followId/')
   @ApiOperation({
     summary: '팔로우 상태 변경',
   })

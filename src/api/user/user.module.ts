@@ -7,6 +7,7 @@ import { SonminsuRequestBookmarkModule } from '@api/sonminsu-request-bookmark/so
 import { SubscribeModule } from '@api/subscribe/subscribe.module';
 import { FollowModule } from '@api/follow/follow.module';
 import { FeedModule } from '@api/feed/feed.module';
+import { SonminsuAnswerModule } from '@api/sonminsu-answer/sonminsu-answer.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { FeedModule } from '@api/feed/feed.module';
     SubscribeModule,
     SonminsuRequestModule,
     SonminsuRequestBookmarkModule,
+    SonminsuAnswerModule,
     FeedModule,
     FollowModule,
   ],

@@ -1,6 +1,6 @@
 import { CreateSonminsuAnswerDto } from '@dto/sonminsuAnswerDto/create-sonminsuAnswer.dto';
 import { UpdateSonminsuAnswerDto } from '@dto/sonminsuAnswerDto/update-sonminsuAnswer.dto';
-import { ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 
 @Injectable()
@@ -9,9 +9,10 @@ export class SonminsuAnswerService {
 
   async createSonminsuAnswer(
     userId: number,
+    requestId: number,
     createSonminsuAnswerDto: CreateSonminsuAnswerDto,
   ) {
-    const { requestId, itemIds } = createSonminsuAnswerDto;
+    const { itemIds } = createSonminsuAnswerDto;
 
     const createdSonminsuAnswer = await this.prisma.sonminsuAnswers.create({
       data: {
@@ -32,25 +33,29 @@ export class SonminsuAnswerService {
     userId: number,
     updateSonminsuAnswerDto: UpdateSonminsuAnswerDto,
   ) {
-    const updatedSonminsuAnswer = await this.prisma.sonminsuAnswers.update({
-      where: {
-        id,
-        userId,
-        deletedAt: null,
-      },
-      data: {
-        items: {
-          connect: updateSonminsuAnswerDto.itemIds.map((id) => ({ id })),
+    const updatedSonminsuAnswer = await this.prisma.sonminsuAnswers
+      .update({
+        where: {
+          id,
+          userId,
+          deletedAt: null,
         },
-      },
-      select: this.selectField,
-    });
+        data: {
+          items: {
+            connect: updateSonminsuAnswerDto.itemIds.map((id) => ({ id })),
+          },
+        },
+        select: this.selectField,
+      })
+      .catch(() => {
+        throw new BadRequestException();
+      });
 
     return { data: updatedSonminsuAnswer };
   }
 
   async deleteSonminsuAnswer(id: number, userId: number) {
-    const deletedSonminsuAnswer = await this.prisma.sonminsuAnswers
+    await this.prisma.sonminsuAnswers
       .update({
         where: {
           id,
@@ -60,15 +65,47 @@ export class SonminsuAnswerService {
         data: {
           deletedAt: new Date().toISOString(),
         },
-        select: {
-          deletedAt: true,
-        },
       })
       .catch(() => {
-        throw new ConflictException();
+        throw new BadRequestException();
+      });
+  }
+
+  async chooseSonminsuAnswer(answerId: number, userId: number) {
+    const result = await this.prisma.sonminsuAnswers
+      .update({
+        where: {
+          id: answerId,
+          request: {
+            userId,
+            answers: {
+              every: {
+                isChoosed: null,
+              },
+            },
+          },
+          deletedAt: null,
+        },
+        data: {
+          isChoosed: true,
+          items: {
+            updateMany: {
+              where: {
+                answerId,
+              },
+              data: {
+                registration: true,
+              },
+            },
+          },
+        },
+        select: this.selectField,
+      })
+      .catch(() => {
+        throw new BadRequestException();
       });
 
-    return { data: deletedSonminsuAnswer };
+    return { data: result };
   }
 
   private readonly selectField = {
