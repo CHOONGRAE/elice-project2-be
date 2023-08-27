@@ -190,7 +190,12 @@ export class UserController {
   @ApiOperation({
     summary: '팬덤 공지 삭제',
   })
-  async deleteFandomAnnouncement() {}
+  async deleteFandomAnnouncement(
+    @Param('announcementId') id: number,
+    @User() userId: number,
+  ) {
+    await this.fandomAnnouncementService.deleteFandomAnnouncement(id, userId);
+  }
 
   @Put('fandoms/:fandomId/subscribe')
   @ApiOperation({
