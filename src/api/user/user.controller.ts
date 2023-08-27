@@ -18,7 +18,6 @@ import {
   ApiBearerAuth,
   ApiConsumes,
   ApiOperation,
-  ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
 import { UserService } from './user.service';

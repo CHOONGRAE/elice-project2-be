@@ -1,5 +1,6 @@
 import { CreateSonminsuItemDto } from '@dto/sonminsuItemDto/create-sonminsuItem.dto';
 import { PaginateSonminsuItemDto } from '@dto/sonminsuItemDto/paginate-sonminsuItem.dto';
+import { SearchSonminsuItemDto } from '@dto/sonminsuItemDto/search-sonminsuItem.dto';
 import { UpdateSonminsuItemDto } from '@dto/sonminsuItemDto/update-sonminsuItem.dto';
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -116,7 +117,7 @@ export class SonminsuItemService {
     };
   }
 
-  async getSonminsuItemsBySearch(searchSonminsuItemDto) {
+  async getSonminsuItemsBySearch(searchSonminsuItemDto: SearchSonminsuItemDto) {
     const { search, page, perPage } = searchSonminsuItemDto;
 
     const [result, totalCount] = await this.prisma.$transaction([
@@ -126,9 +127,23 @@ export class SonminsuItemService {
         where: {
           AND: [
             {
-              title: {
-                contains: search,
-              },
+              OR: [
+                {
+                  title: {
+                    contains: search,
+                  },
+                },
+                {
+                  groupName: {
+                    contains: search,
+                  },
+                },
+                {
+                  artistName: {
+                    contains: search,
+                  },
+                },
+              ],
             },
             {
               OR: [
@@ -155,9 +170,23 @@ export class SonminsuItemService {
         where: {
           AND: [
             {
-              title: {
-                contains: search,
-              },
+              OR: [
+                {
+                  title: {
+                    contains: search,
+                  },
+                },
+                {
+                  groupName: {
+                    contains: search,
+                  },
+                },
+                {
+                  artistName: {
+                    contains: search,
+                  },
+                },
+              ],
             },
             {
               OR: [
