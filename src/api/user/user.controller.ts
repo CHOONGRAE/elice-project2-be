@@ -44,6 +44,8 @@ import { CreateSonminsuAnswerDto } from '@dto/sonminsuAnswerDto/create-sonminsuA
 import { UpdateSonminsuAnswerDto } from '@dto/sonminsuAnswerDto/update-sonminsuAnswer.dto';
 import { CreateSonminsuItemDto } from '@dto/sonminsuItemDto/create-sonminsuItem.dto';
 import { SonminsuItemService } from '@api/sonminsu-item/sonminsu-item.service';
+import { CreateCommentDto } from '@dto/commentDto/create-comment.dto';
+import { CommentService } from '@api/comment/comment.service';
 
 @Controller({
   path: 'users',
@@ -62,6 +64,7 @@ export class UserController {
     private readonly sonminsuAnswerService: SonminsuAnswerService,
     private readonly sonminsuItemService: SonminsuItemService,
     private readonly feedService: FeedService,
+    private readonly commentService: CommentService,
     private readonly followService: FollowService,
   ) {}
 
@@ -386,6 +389,22 @@ export class UserController {
   })
   async deleteFeed(@User() userId: number, @Param('feedId') feedId: number) {
     await this.feedService.deleteFeed(feedId, userId);
+  }
+
+  @Post('comments/:feedId')
+  @ApiOperation({
+    summary: '댓글 작성',
+  })
+  async createComment(
+    @User() userId: number,
+    @Param('feedId') feedId: number,
+    @Body() createCommentDto: CreateCommentDto,
+  ) {
+    return await this.commentService.createComment(
+      userId,
+      feedId,
+      createCommentDto,
+    );
   }
 
   @Put('follows/:followId/')

@@ -6,10 +6,15 @@ import { PrismaService } from '@prisma/prisma.service';
 export class CommentService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createComment(userId: number, createCommentDto: CreateCommentDto) {
+  async createComment(
+    userId: number,
+    feedId: number,
+    createCommentDto: CreateCommentDto,
+  ) {
     const createdComment = await this.prisma.comments.create({
       data: {
         userId,
+        feedId,
         ...createCommentDto,
       },
       select: this.selectField,

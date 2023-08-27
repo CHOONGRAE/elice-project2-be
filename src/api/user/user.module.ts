@@ -9,6 +9,7 @@ import { FollowModule } from '@api/follow/follow.module';
 import { FeedModule } from '@api/feed/feed.module';
 import { SonminsuAnswerModule } from '@api/sonminsu-answer/sonminsu-answer.module';
 import { SonminsuItemModule } from '@api/sonminsu-item/sonminsu-item.module';
+import { CommentModule } from '@api/comment/comment.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { SonminsuItemModule } from '@api/sonminsu-item/sonminsu-item.module';
     SonminsuAnswerModule,
     SonminsuItemModule,
     FeedModule,
+    CommentModule,
     FollowModule,
   ],
   providers: [UserService],
