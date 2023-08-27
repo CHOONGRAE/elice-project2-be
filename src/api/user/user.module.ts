@@ -10,6 +10,7 @@ import { FeedModule } from '@api/feed/feed.module';
 import { SonminsuAnswerModule } from '@api/sonminsu-answer/sonminsu-answer.module';
 import { SonminsuItemModule } from '@api/sonminsu-item/sonminsu-item.module';
 import { CommentModule } from '@api/comment/comment.module';
+import { LikeModule } from '@api/like/like.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { CommentModule } from '@api/comment/comment.module';
     FeedModule,
     CommentModule,
     FollowModule,
+    LikeModule,
   ],
   providers: [UserService],
   controllers: [UserController],
