@@ -380,7 +380,17 @@ export class UserController {
   @ApiOperation({
     summary: '버킷 목록',
   })
-  async getBuckets() {}
+  async getBuckets(@User() userId: number) {
+    return await this.bucketService.getBuckets(userId);
+  }
+
+  @Get('buckets/:bucketId')
+  @ApiOperation({
+    summary: '버킷 상세',
+  })
+  async getBucketById(@User() userId: number, @Param('bucketId') id: number) {
+    return await this.bucketService.getBucket(id, userId);
+  }
 
   @Post('buckets')
   @ApiOperation({
@@ -393,17 +403,13 @@ export class UserController {
     return await this.bucketService.createBucket(userId, createBucketDto);
   }
 
-  @Patch('buckets/:bucketId')
-  @ApiOperation({
-    summary: '버킷 수정',
-  })
-  async updateBucket() {}
-
   @Delete('buckets/:bucketId')
   @ApiOperation({
     summary: '버킷 삭제',
   })
-  async deleteBucket() {}
+  async deleteBucket(@Param('bucketId') id: number, @User() userId: number) {
+    await this.bucketService.deleteBucket(id, userId);
+  }
 
   @Get('feeds')
   @ApiOperation({

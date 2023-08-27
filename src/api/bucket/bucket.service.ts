@@ -47,6 +47,7 @@ export class BucketService {
     };
   }
 
+  //플래튼 처리 해야함
   async getBucket(id: number, userId: number) {
     const result = await this.prisma.buckets.findUnique({
       where: {
