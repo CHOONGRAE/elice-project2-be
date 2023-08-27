@@ -26,4 +26,12 @@ export class FandomController {
   async getHotFandoms() {
     return await this.fandomService.getHotFandoms();
   }
+
+  @Get('search')
+  @ApiOperation({
+    summary: '팬덤 검색',
+  })
+  async getFandomsBySearch(@Query('search') search: string) {
+    return await this.fandomService.getFandomsBySearch(search);
+  }
 }

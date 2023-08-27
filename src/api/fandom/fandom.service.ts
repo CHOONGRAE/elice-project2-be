@@ -132,10 +132,10 @@ export class FandomService {
         orderBy: [
           {
             rank: {
-              point: 'asc',
+              point: 'desc',
             },
           },
-          { createdAt: 'asc' },
+          { createdAt: 'desc' },
         ],
       }),
       this.prisma.fandoms.count({
@@ -177,6 +177,14 @@ export class FandomService {
         fandomName: { contains: searchString },
         deletedAt: null,
       },
+      orderBy: [
+        {
+          rank: {
+            point: 'desc',
+          },
+        },
+        { createdAt: 'desc' },
+      ],
     });
 
     return { data: searchResult };
