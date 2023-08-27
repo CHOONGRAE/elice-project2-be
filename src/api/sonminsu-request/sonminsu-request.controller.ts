@@ -1,6 +1,6 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { SonminsuRequestService } from './sonminsu-request.service';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetSonminsuRequestDto } from '@dto/sonminsuRequestDto/get-sonmisuRequest.dto';
 
 @Controller({
@@ -14,11 +14,22 @@ export class SonminsuRequestController {
   ) {}
 
   @Get()
-  async getSonminsuRequestsDoing(
+  @ApiOperation({
+    summary: '손민수 의뢰 목록',
+  })
+  async getSonminsuRequests(
     @Query() getSonminsuRequestDto: GetSonminsuRequestDto,
   ) {
     return await this.sonminsuRequestService.getSonminsuRequests(
       getSonminsuRequestDto,
     );
+  }
+
+  @Get(':requestId')
+  @ApiOperation({
+    summary: '손민수 의뢰 상세',
+  })
+  async getSominsuRequest(@Param('requestId') id: number) {
+    return await this.sonminsuRequestService.getSonminsuRequest(id);
   }
 }
