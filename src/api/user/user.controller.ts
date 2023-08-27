@@ -49,6 +49,7 @@ import { CommentService } from '@api/comment/comment.service';
 import { LikeService } from '@api/like/like.service';
 import { FandomAnnouncementService } from '@api/fandom-announcement/fandom-announcement.service';
 import { CreateFandomAnnouncementDto } from '@dto/fandomAnnouncement/create-announcement.dto';
+import { UpdateFandomAnnouncementDto } from '@dto/fandomAnnouncement/update-announcement.dto';
 
 @Controller({
   path: 'users',
@@ -173,7 +174,17 @@ export class UserController {
   @ApiOperation({
     summary: '팬덤 공지 수정',
   })
-  async updateFandomAnnouncement() {}
+  async updateFandomAnnouncement(
+    @Param('announcementId') id: number,
+    @User() userId: number,
+    @Body() updateFandomAnnouncementDto: UpdateFandomAnnouncementDto,
+  ) {
+    return await this.fandomAnnouncementService.updateFandomAnnouncement(
+      id,
+      userId,
+      updateFandomAnnouncementDto,
+    );
+  }
 
   @Delete('fandom-announcements/:announcementId')
   @ApiOperation({
