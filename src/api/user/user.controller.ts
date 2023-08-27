@@ -50,6 +50,8 @@ import { LikeService } from '@api/like/like.service';
 import { FandomAnnouncementService } from '@api/fandom-announcement/fandom-announcement.service';
 import { CreateFandomAnnouncementDto } from '@dto/fandomAnnouncement/create-announcement.dto';
 import { UpdateFandomAnnouncementDto } from '@dto/fandomAnnouncement/update-announcement.dto';
+import { CreateBucketDto } from '@dto/bucketDto/create-bucket.dto';
+import { BucketService } from '@api/bucket/bucket.service';
 
 @Controller({
   path: 'users',
@@ -68,6 +70,7 @@ export class UserController {
     private readonly sonminsuRequestBookmarkService: SonminsuRequestBookmarkService,
     private readonly sonminsuAnswerService: SonminsuAnswerService,
     private readonly sonminsuItemService: SonminsuItemService,
+    private readonly bucketService: BucketService,
     private readonly feedService: FeedService,
     private readonly commentService: CommentService,
     private readonly followService: FollowService,
@@ -383,7 +386,12 @@ export class UserController {
   @ApiOperation({
     summary: '버킷 생성',
   })
-  async createBucket() {}
+  async createBucket(
+    @User() userId: number,
+    @Body() createBucketDto: CreateBucketDto,
+  ) {
+    return await this.bucketService.createBucket(userId, createBucketDto);
+  }
 
   @Patch('buckets/:bucketId')
   @ApiOperation({
