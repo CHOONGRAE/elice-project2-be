@@ -97,12 +97,6 @@ export class FandomAnnouncementService {
         image: true,
       },
     },
-    fandom: {
-      select: {
-        id: true,
-        fandomName: true,
-      },
-    },
     content: true,
     createdAt: true,
   };
