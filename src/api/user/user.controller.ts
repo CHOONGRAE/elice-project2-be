@@ -43,6 +43,7 @@ import { FollowDto } from '@dto/followDto/follow.dto';
 import { CreateFeedDto } from '@dto/feedDto/create-feed.dto';
 import { FeedService } from '@api/feed/feed.service';
 import { UpdateFeedDto } from '@dto/feedDto/update-feed.dto';
+import { PaginateFeedDto } from '@dto/feedDto/paginate-feed.dto';
 
 @Controller({
   path: 'users',
@@ -268,9 +269,22 @@ export class UserController {
 
   @Get('feeds')
   @ApiOperation({
-    summary: '내 피드 목록',
+    summary: '피드 목록',
   })
-  async getFeedsByUser(@User() userId: number) {}
+  async getFeeds(@User() userId: number, @Query() pagination: PaginateFeedDto) {
+    return await this.feedService.getFeedsByUser(userId, pagination);
+  }
+
+  @Get('feeds/my')
+  @ApiOperation({
+    summary: '내가 작성한 피드 목록',
+  })
+  async getFeedsByUser(
+    @User() userId: number,
+    @Query() pagination: PaginateFeedDto,
+  ) {
+    return await this.feedService.getFeedsByAuthor(userId, pagination);
+  }
 
   @Post('feeds')
   @ApiConsumes('multipart/form-data')
