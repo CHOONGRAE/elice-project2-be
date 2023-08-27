@@ -407,6 +407,14 @@ export class UserController {
     );
   }
 
+  @Delete('comments/:commentId')
+  @ApiOperation({
+    summary: '댓글 삭제',
+  })
+  async deleteComment(@User() userId: number, @Param('commentId') id: number) {
+    await this.commentService.deleteComment(id, userId);
+  }
+
   @Put('follows/:followId/')
   @ApiOperation({
     summary: '팔로우 상태 변경',

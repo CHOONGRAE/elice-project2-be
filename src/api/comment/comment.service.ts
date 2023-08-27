@@ -1,5 +1,5 @@
 import { CreateCommentDto } from '@dto/commentDto/create-comment.dto';
-import { ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 
 @Injectable()
@@ -36,7 +36,7 @@ export class CommentService {
         },
       })
       .catch(() => {
-        throw new ConflictException();
+        throw new BadRequestException();
       });
   }
 
