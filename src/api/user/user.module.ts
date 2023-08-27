@@ -6,6 +6,7 @@ import { SonminsuRequestModule } from '@api/sonminsu-request/sonminsu-request.mo
 import { SonminsuRequestBookmarkModule } from '@api/sonminsu-request-bookmark/sonminsu-request-bookmark.module';
 import { SubscribeModule } from '@api/subscribe/subscribe.module';
 import { FollowModule } from '@api/follow/follow.module';
+import { FeedModule } from '@api/feed/feed.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { FollowModule } from '@api/follow/follow.module';
     SubscribeModule,
     SonminsuRequestModule,
     SonminsuRequestBookmarkModule,
+    FeedModule,
     FollowModule,
   ],
   providers: [UserService],

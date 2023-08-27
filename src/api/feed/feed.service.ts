@@ -3,7 +3,7 @@ import { SonminsuItemService } from '@api/sonminsu-item/sonminsu-item.service';
 import { CreateFeedDto } from '@dto/feedDto/create-feed.dto';
 import { PaginateFeedDto } from '@dto/feedDto/paginate-feed.dto';
 import { UpdateFeedDto } from '@dto/feedDto/update-feed.dto';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 import { S3Service } from 'src/s3/s3.service';
 
@@ -26,122 +26,280 @@ export class FeedService {
       image,
       sonminsuItems,
     } = createFeedDto;
-    const createdFeed = await this.prisma.feeds.create({
-      data: {
-        userId,
-        fandomId,
-        content,
-        groupName,
-        artistName,
-        images: {
-          create: [
-            {
-              url: (await this.s3.uploadImage(image)) as string,
+
+    const [{ images, tags, _count, ...createdFeed }] =
+      await this.prisma.$transaction([
+        this.prisma.feeds.create({
+          data: {
+            userId,
+            fandomId,
+            content,
+            groupName,
+            artistName,
+            images: {
+              create: {
+                url: await this.s3.uploadImage(
+                  image,
+                  `feeds/author-${userId}/`,
+                ),
+              },
             },
-          ],
-        },
-        tags: {
-          create: await this.createHashTags(hashTags),
-        },
-      },
-    });
-
-    await Promise.all(
-      sonminsuItems.map((id) =>
-        this.sonminsuItem.updateSonminsuItem(id, {
-          feedId: createdFeed.id,
-          registration: true,
+            tags: {
+              create: await this.createHashTags(hashTags || []),
+            },
+            sonminsuItems: {
+              connect: (sonminsuItems || []).map((id) => ({ id })),
+            },
+          },
+          select: this.selectField,
         }),
-      ),
-    );
+        this.prisma.fandomRanks.update({
+          where: {
+            fandomId,
+          },
+          data: {
+            point: {
+              increment: 2,
+            },
+          },
+        }),
+      ]);
 
-    return createdFeed;
-  }
-
-  async updateFeed(updateFeedDto: UpdateFeedDto) {
-    const { feedId, content, hashTags, sonminsuItems } = updateFeedDto;
-
-    const updatedFeed = await this.prisma.feeds.update({
-      where: {
-        id: feedId,
-      },
+    return {
       data: {
-        content,
-        tags: {
-          create: await this.createHashTags(hashTags),
-        },
+        ...createdFeed,
+        image: images[0].url,
+        tags: tags.map(({ hashTag }) => hashTag.tag),
+        comments: _count.comments,
       },
-    });
-
-    await Promise.all(
-      sonminsuItems.map((id) =>
-        this.sonminsuItem.updateSonminsuItem(id, {
-          feedId: feedId,
-          registration: true,
-        }),
-      ),
-    );
-
-    return updatedFeed;
+    };
   }
 
-  async deleteFeed(feedId: number) {
-    const deletedFeed = await this.prisma.feeds.delete({
-      where: {
-        id: feedId,
-      },
-    });
+  async updateFeed(
+    userId: number,
+    feedId: number,
+    updateFeedDto: UpdateFeedDto,
+  ) {
+    const { content, hashTags, sonminsuItems } = updateFeedDto;
 
-    return deletedFeed;
+    const { images, tags, _count, ...updatedFeed } = await this.prisma.feeds
+      .update({
+        where: {
+          id: feedId,
+          userId,
+          deletedAt: null,
+        },
+        data: {
+          content,
+          tags: {
+            deleteMany: {},
+            create: await this.createHashTags(hashTags || []),
+          },
+          sonminsuItems: {
+            connect: (sonminsuItems || []).map((id) => ({ id })),
+          },
+        },
+        select: this.selectField,
+      })
+      .catch(() => {
+        throw new BadRequestException();
+      });
+
+    return {
+      data: {
+        ...updatedFeed,
+        image: images[0].url,
+        tags: tags.map(({ hashTag }) => hashTag.tag),
+        comments: _count.comments,
+      },
+    };
+  }
+
+  async deleteFeed(feedId: number, userId: number) {
+    await this.prisma.feeds
+      .update({
+        where: {
+          id: feedId,
+          userId,
+          deletedAt: null,
+        },
+        data: {
+          deletedAt: new Date().toISOString(),
+        },
+      })
+      .catch(() => {
+        throw new BadRequestException();
+      });
   }
 
   async getFeeds(pagination: PaginateFeedDto) {
     const { page, perPage } = pagination;
 
-    const result = await this.prisma.feeds.findMany({
-      skip: perPage * (page - 1),
-      take: perPage,
-    });
+    const [results, totalCount] = await this.prisma.$transaction([
+      this.prisma.feeds.findMany({
+        skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
+        take: Math.max(0, perPage || 10),
+        where: {
+          deletedAt: null,
+        },
+        select: this.selectField,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.prisma.feeds.count({
+        where: {
+          deletedAt: null,
+        },
+      }),
+    ]);
 
-    return result;
+    return {
+      data: results.map(({ images, tags, _count, ...result }) => ({
+        ...result,
+        image: images[0].url,
+        tags: tags.map(({ hashTag }) => hashTag.tag),
+        comments: _count.comments,
+      })),
+      totalPage: Math.ceil(totalCount / (perPage || 10)),
+      currentPage: page || 1,
+    };
   }
 
   async getFeedsByUser(userId: number, pagination: PaginateFeedDto) {
     const { page, perPage } = pagination;
 
-    const result = await this.prisma.feeds.findMany({
-      where: {
-        userId,
-      },
-      skip: perPage * (page - 1),
-      take: perPage,
-    });
+    //     const feeds = await this.prisma.$queryRaw`
+    //     SELECT f.* FROM public."Feeds" as f
+    //     LEFT JOIN public."Subscribes" s ON f."fandom_id" = s."fandom_id"
+    // WHERE s."user_id" IS NULL OR s."user_id" != ${userId}
+    // ORDER BY CASE WHEN s."user_id" = ${userId} THEN 1 ELSE 0 END DESC,
+    //     f."created_at" DESC;
+    //     `;
+    //     return feeds;
 
-    return result;
+    const [results, totalCount] = await this.prisma.$transaction([
+      this.prisma.feeds.findMany({
+        skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
+        take: Math.max(0, perPage || 10),
+        where: {
+          userId: { not: userId },
+          deletedAt: null,
+        },
+        select: this.selectField,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.prisma.feeds.count({
+        where: {
+          userId: { not: userId },
+          deletedAt: null,
+        },
+      }),
+    ]);
+
+    return {
+      data: results.map(({ images, tags, _count, ...result }) => ({
+        ...result,
+        image: images[0].url,
+        tags: tags.map(({ hashTag }) => hashTag.tag),
+        comments: _count.comments,
+      })),
+      totalPage: Math.ceil(totalCount / (perPage || 10)),
+      currentPage: page || 1,
+    };
+  }
+
+  async getFeedsByAuthor(userId: number, pagination: PaginateFeedDto) {
+    const { page, perPage } = pagination;
+
+    const [results, totalCount] = await this.prisma.$transaction([
+      this.prisma.feeds.findMany({
+        skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
+        take: Math.max(0, perPage || 10),
+        where: {
+          userId,
+          deletedAt: null,
+        },
+        select: this.selectField,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.prisma.feeds.count({
+        where: {
+          userId,
+          deletedAt: null,
+        },
+      }),
+    ]);
+
+    return {
+      data: results.map(({ images, tags, _count, ...result }) => ({
+        ...result,
+        image: images[0].url,
+        tags: tags.map(({ hashTag }) => hashTag.tag),
+        comments: _count.comments,
+      })),
+      totalPage: Math.ceil(totalCount / (perPage || 10)),
+      currentPage: page || 1,
+    };
   }
 
   async getFeedsByFandom(fandomId: number, pagination: PaginateFeedDto) {
     const { page, perPage } = pagination;
 
-    const result = await this.prisma.feeds.findMany({
-      where: {
-        fandomId,
-      },
-      skip: perPage * (page - 1),
-      take: perPage,
-    });
+    const [results, totalCount] = await this.prisma.$transaction([
+      this.prisma.feeds.findMany({
+        skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
+        take: Math.max(0, perPage || 10),
+        where: {
+          fandomId,
+          deletedAt: null,
+        },
+        select: this.selectField,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.prisma.feeds.count({
+        where: {
+          fandomId,
+          deletedAt: null,
+        },
+      }),
+    ]);
 
-    return result;
+    return {
+      data: results.map(({ images, tags, _count, ...result }) => ({
+        ...result,
+        image: images[0].url,
+        tags: tags.map(({ hashTag }) => hashTag.tag),
+        comments: _count.comments,
+      })),
+      totalPage: Math.ceil(totalCount / (perPage || 10)),
+      currentPage: page || 1,
+    };
   }
 
   async getFeedById(id: number) {
-    const feed = await this.prisma.feeds.findUnique({
-      where: {
-        id,
-      },
-    });
+    const { images, tags, _count, ...feed } =
+      await this.prisma.feeds.findUnique({
+        where: {
+          id,
+        },
+        select: { ...this.selectField, groupName: true, artistName: true },
+      });
 
-    return feed;
+    return {
+      data: {
+        ...feed,
+        image: images[0].url,
+        tags: tags.map(({ hashTag }) => hashTag.tag),
+        comments: _count.comments,
+      },
+    };
   }
 
   private async createHashTags(hashTags: string[]) {
@@ -155,4 +313,47 @@ export class FeedService {
       hashTagId: id,
     }));
   }
+
+  private readonly selectField = {
+    id: true,
+    content: true,
+    images: true,
+    createdAt: true,
+    author: {
+      select: {
+        id: true,
+        image: true,
+        nickName: true,
+      },
+    },
+    fandom: {
+      select: {
+        id: true,
+        fandomName: true,
+      },
+    },
+    tags: {
+      select: {
+        hashTag: {
+          select: {
+            tag: true,
+          },
+        },
+      },
+    },
+    sonminsuItems: {
+      select: {
+        id: true,
+      },
+    },
+    _count: {
+      select: {
+        comments: {
+          where: {
+            deletedAt: null,
+          },
+        },
+      },
+    },
+  };
 }
