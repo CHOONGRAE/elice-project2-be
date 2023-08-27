@@ -31,7 +31,7 @@ export class UserBuckerController {
     return await this.bucketService.getBuckets(userId);
   }
 
-  @Get('buckets/:bucketId')
+  @Get(':bucketId')
   @ApiOperation({
     summary: '버킷 상세',
   })
