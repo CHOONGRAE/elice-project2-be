@@ -13,6 +13,7 @@ import { CommentModule } from '@api/comment/comment.module';
 import { LikeModule } from '@api/like/like.module';
 import { FandomAnnouncementModule } from '@api/fandom-announcement/fandom-announcement.module';
 import { BucketModule } from '@api/bucket/bucket.module';
+import { BucketItemModule } from '@api/bucket-item/bucket-item.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { BucketModule } from '@api/bucket/bucket.module';
     SonminsuAnswerModule,
     SonminsuItemModule,
     BucketModule,
+    BucketItemModule,
     FeedModule,
     CommentModule,
     FollowModule,

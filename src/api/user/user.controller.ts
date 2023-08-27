@@ -52,6 +52,7 @@ import { CreateFandomAnnouncementDto } from '@dto/fandomAnnouncement/create-anno
 import { UpdateFandomAnnouncementDto } from '@dto/fandomAnnouncement/update-announcement.dto';
 import { CreateBucketDto } from '@dto/bucketDto/create-bucket.dto';
 import { BucketService } from '@api/bucket/bucket.service';
+import { BucketItemService } from '@api/bucket-item/bucket-item.service';
 
 @Controller({
   path: 'users',
@@ -71,6 +72,7 @@ export class UserController {
     private readonly sonminsuAnswerService: SonminsuAnswerService,
     private readonly sonminsuItemService: SonminsuItemService,
     private readonly bucketService: BucketService,
+    private readonly bucketItemService: BucketItemService,
     private readonly feedService: FeedService,
     private readonly commentService: CommentService,
     private readonly followService: FollowService,
@@ -409,6 +411,17 @@ export class UserController {
   })
   async deleteBucket(@Param('bucketId') id: number, @User() userId: number) {
     await this.bucketService.deleteBucket(id, userId);
+  }
+
+  @Put('buckets/:bucketId/toggle/:itemId')
+  @ApiOperation({
+    summary: '버킷에 아이템 담기',
+  })
+  async toggleBucketItem(
+    @Param('bucketId') bucketId: number,
+    @Param('itemId') itemId: number,
+  ) {
+    await this.bucketItemService.changeBucketItemStatus({ bucketId, itemId });
   }
 
   @Get('feeds')
