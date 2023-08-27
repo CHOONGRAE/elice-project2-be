@@ -46,6 +46,7 @@ import { CreateSonminsuItemDto } from '@dto/sonminsuItemDto/create-sonminsuItem.
 import { SonminsuItemService } from '@api/sonminsu-item/sonminsu-item.service';
 import { CreateCommentDto } from '@dto/commentDto/create-comment.dto';
 import { CommentService } from '@api/comment/comment.service';
+import { LikeService } from '@api/like/like.service';
 
 @Controller({
   path: 'users',
@@ -66,6 +67,7 @@ export class UserController {
     private readonly feedService: FeedService,
     private readonly commentService: CommentService,
     private readonly followService: FollowService,
+    private readonly likeService: LikeService,
   ) {}
 
   @Get('fandoms')
@@ -389,6 +391,14 @@ export class UserController {
   })
   async deleteFeed(@User() userId: number, @Param('feedId') feedId: number) {
     await this.feedService.deleteFeed(feedId, userId);
+  }
+
+  @Put('feeds/:feedId/like')
+  @ApiOperation({
+    summary: '좋아요 토글',
+  })
+  async toggleLike(@Param('feedId') feedId: number, @User() userId: number) {
+    await this.likeService.changeLikeStatus({ feedId, userId });
   }
 
   @Post('comments/:feedId')
