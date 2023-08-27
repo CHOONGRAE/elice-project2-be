@@ -6,10 +6,6 @@ export class CreateFandomAnnouncementDto extends OmitType(
   FandomAnnouncementEntity,
   ['id', 'userId', 'createdAt', 'deletedAt'],
 ) {
-  @IsNumber()
-  @ApiProperty()
-  fandomId: number;
-
   @IsString()
   @ApiProperty()
   content: string;

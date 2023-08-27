@@ -12,12 +12,14 @@ export class FandomAnnouncementService {
 
   async createFandomAnnouncement(
     userId: number,
+    fandomId: number,
     createFandomAnnouncementDto: CreateFandomAnnouncementDto,
   ) {
     const createdFandomAnnouncement =
       await this.prisma.fandomAnnouncements.create({
         data: {
           userId,
+          fandomId,
           ...createFandomAnnouncementDto,
         },
         select: this.selectField,
