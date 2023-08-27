@@ -42,6 +42,8 @@ import { PaginateFeedDto } from '@dto/feedDto/paginate-feed.dto';
 import { SonminsuAnswerService } from '@api/sonminsu-answer/sonminsu-answer.service';
 import { CreateSonminsuAnswerDto } from '@dto/sonminsuAnswerDto/create-sonminsuAnswer.dto';
 import { UpdateSonminsuAnswerDto } from '@dto/sonminsuAnswerDto/update-sonminsuAnswer.dto';
+import { CreateSonminsuItemDto } from '@dto/sonminsuItemDto/create-sonminsuItem.dto';
+import { SonminsuItemService } from '@api/sonminsu-item/sonminsu-item.service';
 
 @Controller({
   path: 'users',
@@ -58,6 +60,7 @@ export class UserController {
     private readonly sonminsuRequestSevice: SonminsuRequestService,
     private readonly sonminsuRequestBookmarkService: SonminsuRequestBookmarkService,
     private readonly sonminsuAnswerService: SonminsuAnswerService,
+    private readonly sonminsuItemService: SonminsuItemService,
     private readonly feedService: FeedService,
     private readonly followService: FollowService,
   ) {}
@@ -304,6 +307,18 @@ export class UserController {
     @Param('requestId') answerId: number,
   ) {
     await this.sonminsuAnswerService.chooseSonminsuAnswer(answerId, userId);
+  }
+
+  @Post('sonminsu-item')
+  @ApiOperation({
+    summary: '손민수 아이템 임시 생성',
+  })
+  async createSonminsuItem(
+    @Body() createSonminuItemDto: CreateSonminsuItemDto,
+  ) {
+    return await this.sonminsuItemService.createSonminsuItem(
+      createSonminuItemDto,
+    );
   }
 
   @Get('feeds')
