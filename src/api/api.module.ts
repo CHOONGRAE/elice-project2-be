@@ -12,6 +12,7 @@ import { FeedModule } from './feed/feed.module';
 import { FandomAnnouncementModule } from './fandom-announcement/fandom-announcement.module';
 import { SonminsuRequestModule } from './sonminsu-request/sonminsu-request.module';
 import { UserModule } from './user/user.module';
+import { CommentModule } from './comment/comment.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { UserModule } from './user/user.module';
     FandomModule,
     FandomAnnouncementModule,
     FeedModule,
+    CommentModule,
     SonminsuRequestModule,
     SonminsuItemModule,
     FollowModule,
