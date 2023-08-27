@@ -19,6 +19,7 @@ export class SonminsuItemService {
     artistName,
   }: CreateSonminsuItemDto) {
     const { image, title, price, url } = await this.scraper.doScrap(originUrl);
+
     const result = await this.prisma.sonminsuItems.create({
       data: {
         imgUrl: image,
@@ -28,14 +29,10 @@ export class SonminsuItemService {
         groupName,
         artistName,
       },
+      select: this.selectField,
     });
-    return {
-      id: result.id,
-      img: result.imgUrl,
-      title: result.title,
-      price: result.price,
-      originUrl: result.originUrl,
-    };
+
+    return { data: result };
   }
 
   async updateSonminsuItem(
@@ -45,9 +42,10 @@ export class SonminsuItemService {
     const result = await this.prisma.sonminsuItems.update({
       where: { id },
       data: updateSonminsuItemDto,
+      select: this.selectField,
     });
 
-    return result;
+    return { data: result };
   }
 
   @Cron(CronExpression.EVERY_2_HOURS)
@@ -70,14 +68,130 @@ export class SonminsuItemService {
   async getSonminsuItems(pagination: PaginateSonminsuItemDto) {
     const { page, perPage } = pagination;
 
-    const result = await this.prisma.sonminsuItems.findMany({
-      where: {
-        registration: false,
-      },
-      skip: perPage * (page - 1),
-      take: perPage,
-    });
+    const [result, totalCount] = await this.prisma.$transaction([
+      this.prisma.sonminsuItems.findMany({
+        skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
+        take: Math.max(0, perPage || 10),
+        where: {
+          OR: [
+            {
+              feedId: { not: null },
+              feed: {
+                deletedAt: null,
+              },
+            },
+            {
+              answerId: { not: null },
+              registration: true,
+            },
+          ],
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        select: this.selectField,
+      }),
+      this.prisma.sonminsuItems.count({
+        where: {
+          OR: [
+            {
+              feedId: { not: null },
+              feed: {
+                deletedAt: null,
+              },
+            },
+            {
+              answerId: { not: null },
+              registration: true,
+            },
+          ],
+        },
+      }),
+    ]);
 
-    return result;
+    return {
+      data: result,
+      totalPage: Math.ceil(totalCount / (perPage || 10)),
+      currentPage: page || 1,
+    };
   }
+
+  async getSonminsuItemsBySearch(searchSonminsuItemDto) {
+    const { search, page, perPage } = searchSonminsuItemDto;
+
+    const [result, totalCount] = await this.prisma.$transaction([
+      this.prisma.sonminsuItems.findMany({
+        skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
+        take: Math.max(0, perPage || 10),
+        where: {
+          AND: [
+            {
+              title: {
+                contains: search,
+              },
+            },
+            {
+              OR: [
+                {
+                  feedId: { not: null },
+                  feed: {
+                    deletedAt: null,
+                  },
+                },
+                {
+                  answerId: { not: null },
+                  registration: true,
+                },
+              ],
+            },
+          ],
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        select: this.selectField,
+      }),
+      this.prisma.sonminsuItems.count({
+        where: {
+          AND: [
+            {
+              title: {
+                contains: search,
+              },
+            },
+            {
+              OR: [
+                {
+                  feedId: { not: null },
+                  feed: {
+                    deletedAt: null,
+                  },
+                },
+                {
+                  answerId: { not: null },
+                  registration: true,
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    ]);
+
+    return {
+      data: result,
+      totalPage: Math.ceil(totalCount / (perPage || 10)),
+      currentPage: page || 1,
+    };
+  }
+
+  private readonly selectField = {
+    id: true,
+    originUrl: true,
+    title: true,
+    price: true,
+    imgUrl: true,
+    groupName: true,
+    artistName: true,
+  };
 }
