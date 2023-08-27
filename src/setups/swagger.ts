@@ -52,12 +52,6 @@ export const setupSwagger = (app: INestApplication) => {
               (document.paths[endpoint][method].requestBody['content'][
                 'multipart/form-data'
               ]['encoding'] = encoding);
-
-          console.log(
-            document.paths[endpoint][method].requestBody['content'][
-              'multipart/form-data'
-            ]['encoding'],
-          );
         }
       }
     }

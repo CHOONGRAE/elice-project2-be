@@ -14,6 +14,7 @@ import { LikeModule } from '@api/like/like.module';
 import { FandomAnnouncementModule } from '@api/fandom-announcement/fandom-announcement.module';
 import { BucketModule } from '@api/bucket/bucket.module';
 import { BucketItemModule } from '@api/bucket-item/bucket-item.module';
+import * as Controllers from './controllers';
 
 @Module({
   imports: [
@@ -32,6 +33,6 @@ import { BucketItemModule } from '@api/bucket-item/bucket-item.module';
     LikeModule,
   ],
   providers: [UserService],
-  controllers: [UserController],
+  controllers: [UserController, ...Object.values(Controllers)],
 })
 export class UserModule {}

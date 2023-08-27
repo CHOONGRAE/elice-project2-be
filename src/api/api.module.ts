@@ -5,7 +5,6 @@ import { MailerModule } from '@mailer';
 import { AuthModule } from '@api/auth/auth.module';
 import { JwtModule } from '@jwt';
 import { S3Module } from '@s3';
-import { FollowModule } from './follow/follow.module';
 import { FandomModule } from './fandom/fandom.module';
 import { SonminsuItemModule } from './sonminsu-item/sonminsu-item.module';
 import { FeedModule } from './feed/feed.module';
@@ -21,15 +20,14 @@ import { CommentModule } from './comment/comment.module';
     MailerModule,
     JwtModule,
     S3Module,
-    AuthModule,
-    UserModule,
     FandomModule,
     FandomAnnouncementModule,
-    FeedModule,
-    CommentModule,
     SonminsuRequestModule,
     SonminsuItemModule,
-    FollowModule,
+    FeedModule,
+    CommentModule,
+    AuthModule,
+    UserModule,
   ],
 })
 export class ApiModule {}

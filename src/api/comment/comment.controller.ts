@@ -6,7 +6,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
   path: 'comments',
   version: '1',
 })
-@ApiTags('Comments Api')
+@ApiTags('Comments API')
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}
 
