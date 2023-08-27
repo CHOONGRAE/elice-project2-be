@@ -1,4 +1,4 @@
-import { ApiProperty, IntersectionType, OmitType } from '@nestjs/swagger';
+import { ApiProperty, IntersectionType, PartialType } from '@nestjs/swagger';
 import { AuthEntity, UserEntity } from '@entities';
 import {
   IsEmail,
@@ -9,8 +9,8 @@ import {
 } from 'class-validator';
 
 export class CreateAuthDto extends IntersectionType(
-  OmitType(AuthEntity, ['id'] as const),
-  OmitType(UserEntity, ['userId', 'selectedAnswerCount', 'createdAt'] as const),
+  PartialType(AuthEntity),
+  PartialType(UserEntity),
 ) {
   @IsNotEmpty()
   @IsString()

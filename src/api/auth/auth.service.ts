@@ -5,15 +5,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 import { RedisService } from '@redis/redis.service';
-import {
-  CreateAuthDto,
-  SendVerificationCodeDto,
-  SigninDto,
-  ConfirmVerificationCodeDto,
-} from '@dto/authDto';
+import { SendVerificationCodeDto } from '@dto/authDto/send-verificationCode.dto';
+import { ConfirmVerificationCodeDto } from '@dto/authDto/confirm-verificationCode.dto';
+import { CreateAuthDto } from '@dto/authDto/create-auth.dto';
+import { SigninDto } from '@dto/authDto/signin.dto';
 import { MailerService } from 'src/mailer/mailer.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { S3Service } from 'src/s3/s3.service';
 
 const ALPHABET = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
 
@@ -36,6 +35,7 @@ export class AuthService {
     private readonly redis: RedisService,
     private readonly mailer: MailerService,
     private readonly jwt: JwtService,
+    private readonly s3: S3Service,
   ) {}
 
   async sendVerificationCode({ email }: SendVerificationCodeDto) {
@@ -77,13 +77,9 @@ export class AuthService {
       data: {
         email,
         password: hashedPassword,
-        user: {
-          create: {
-            userName,
-            birthDate,
-            phoneNumber,
-          },
-        },
+        userName,
+        birthDate,
+        phoneNumber,
       },
     });
 
@@ -92,14 +88,30 @@ export class AuthService {
 
   async signin({ email, password }: SigninDto) {
     const exUser = await this.prisma.auth.findMany({
-      where: { email },
+      where: {
+        email,
+        users: {
+          some: {
+            authId: { not: null },
+          },
+        },
+      },
+      select: {
+        password: true,
+        users: {
+          select: { id: true },
+        },
+      },
     });
 
     if (!exUser.length) {
       throw new UnauthorizedException();
     }
 
-    const { id, password: hashedPassword } = exUser[0];
+    const {
+      users: [{ id }],
+      password: hashedPassword,
+    } = exUser[0];
 
     const isValidated = await bcrypt.compare(password, hashedPassword);
 
@@ -143,7 +155,10 @@ export class AuthService {
   private async createTokens(id: number, email: string) {
     const refreshKey = await bcrypt.hash(email, 10);
 
-    const accessToken = await this.jwt.signAsync({ sub: id });
+    const accessToken = await this.jwt.signAsync(
+      { sub: id },
+      { expiresIn: (EXPIRE_REFESH_TOKEN * 2) / 1000 },
+    );
 
     const refreshToken = await this.jwt.signAsync(
       { sub: id, email, key: refreshKey },

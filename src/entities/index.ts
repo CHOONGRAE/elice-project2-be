@@ -17,6 +17,7 @@ export * from './readedMessage.entity';
 export * from './sonminsuAnswer.entity';
 export * from './sonminsuItem.entity';
 export * from './sonminsuRequest.entity';
+export * from './sonminsuRequestBookmark.entity';
 export * from './sonminsuRequestImage.entity';
 export * from './subscribe.entity';
 export * from './user.entity';

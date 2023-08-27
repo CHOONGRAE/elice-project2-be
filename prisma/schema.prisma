@@ -11,24 +11,26 @@ model Auth {
   id Int @id @default(autoincrement()) 
   email String
   password String
+  userName String? @map("user_name")
+  birthDate String? @map("birth_date")
+  phoneNumber String? @map("phone_number")
 
-  user Users?
+  users Users[]
 }
 
 model Users{
-  userId Int @id @map("user_id")
-  userName String? @map("user_name")
+  id Int @id @default(autoincrement())
+  authId Int? @map("auth_id")
   nickName String? @map("nick_name")
   introduction String?
-  profileImgUrl String? @map("profile_image_url")
-  birthDate String? @map("birth_date")
-  phoneNumber String? @map("phone_number")
-  createdAt DateTime? @default(now()) @map("created_at")
+  image String? @map("profile_image_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
 
-  auth Auth @relation(fields: [userId], references: [id], onDelete: Cascade)
+  auth Auth? @relation(fields: [authId], references: [id])
 
-  follower Follows[] @relation("Follower")
-  follow Follows[] @relation("Follow")
+  followers Follows[] @relation("Follower")
+  follows Follows[] @relation("Follow")
   fandoms Fandoms[]
   fandomAnnouncements FandomAnnouncements[]
   subscribes Subscribes[]
@@ -40,25 +42,27 @@ model Users{
   buckets Buckets[]
   messages Messages[]
   readedMessages ReadedMessages[]
+  bookmarks SonminsuRequestBookmarks[]
 }
 
 model Follows {
   userId Int @map("user_id")
   followId Int @map("follow_id")
-  follower Users @relation("Follower", fields: [userId], references: [userId], onDelete: Cascade)
-  follow Users @relation("Follow", fields: [followId], references: [userId], onDelete: Cascade)
+  follower Users @relation("Follower", fields: [userId], references: [id], onDelete: Cascade)
+  follow Users @relation("Follow", fields: [followId], references: [id], onDelete: Cascade)
 
   @@id([userId,followId])
 }
 
 model Fandoms {
   id Int @id @default(autoincrement()) 
-  userId Int @map("user_id")
+  userId Int? @map("user_id")
   fandomName String @map("fandom_name")
-  thumbnailImgUrl String @map("thumbnail_image_url")
+  image String @map("thumbnail_image_url")
   createdAt DateTime @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
 
-  admin Users @relation(fields: [userId], references: [userId])
+  admin Users? @relation(fields: [userId], references: [id])
 
   rank FandomRanks?
   announcements FandomAnnouncements[]
@@ -80,15 +84,17 @@ model FandomAnnouncements {
   userId Int? @map("user_id")
   content String
   createdAt DateTime @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
 
-  fandom Fandoms? @relation(fields: [fandomId], references: [id], onDelete: SetNull)
-  author Users? @relation(fields: [userId], references: [userId], onDelete: SetNull)
+  fandom Fandoms? @relation(fields: [fandomId], references: [id])
+  author Users? @relation(fields: [userId], references: [id])
 }
 
 model Subscribes {
   userId Int @map("user_id")
   fandomId Int @map("fandom_id")
-  user Users @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  user Users @relation(fields: [userId], references: [id], onDelete: Cascade)
   fandom Fandoms @relation(fields: [fandomId], references: [id], onDelete: Cascade)
 
   @@id([userId,fandomId])
@@ -98,12 +104,14 @@ model Feeds {
   id Int @id @default(autoincrement())
   userId Int? @map("user_id")
   fandomId Int? @map("fandom_id")
-  content String  
+  content String
+  groupName String @map("group_name")
+  artistName String @map("artist_name")  
   createdAt DateTime @default(now()) @map("created_at")
-  deletedAt DateTime @default(dbgenerated("('1970-01-01T00:00:00.000Z')")) @map("deleted_at")
+  deletedAt DateTime? @map("deleted_at")
 
-  author Users? @relation(fields: [userId], references: [userId], onDelete: SetNull)
-  fandoms Fandoms? @relation(fields: [fandomId], references: [id], onDelete: SetNull)
+  author Users? @relation(fields: [userId], references: [id])
+  fandom Fandoms? @relation(fields: [fandomId], references: [id])
 
   tags FeedHashTags[]
   images FeedImages[]
@@ -134,13 +142,14 @@ model FeedImages {
   feedId Int? @map("feed_id")
   url String
 
-  feed Feeds? @relation(fields: [feedId], references: [id], onDelete: SetNull)
+  feed Feeds? @relation(fields: [feedId], references: [id])
 }
 
 model Likes {
   userId Int @map("user_id")
   feedId Int @map("feed_id")
-  user Users @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  user Users @relation(fields: [userId], references: [id], onDelete: Cascade)
   feed Feeds @relation(fields: [feedId], references: [id], onDelete: Cascade)
 
   @@id([userId, feedId])
@@ -149,15 +158,15 @@ model Likes {
 model Comments {
   id Int @id @default(autoincrement())
   feedId Int? @map("feed_id")
-  parentId Int? 
+  parentId Int? @map("parent_id")
   userId Int? @map("user_id")
   content String
   createdAt DateTime @default(now()) @map("created_at")
-  deletedAt DateTime @default(dbgenerated("('1970-01-01T00:00:00.000Z')")) @map("deleted_at")
+  deletedAt DateTime? @map("deleted_at")
 
-  feeds Feeds? @relation(fields: [feedId], references: [id], onDelete: SetNull)
+  feed Feeds? @relation(fields: [feedId], references: [id])
   parent Comments? @relation("replies", fields: [parentId], references: [id])
-  author Users? @relation(fields: [userId], references: [userId], onDelete: SetNull)
+  author Users? @relation(fields: [userId], references: [id])
 
   replies Comments[] @relation("replies")
 }
@@ -167,13 +176,27 @@ model SonminsuRequests {
   userId Int? @map("user_id")
   title String
   content String
-  done Boolean @default(false)
+  groupName String @map("group_name")
+  artistName String @map("artist_name")
+  isDone Boolean? @map("is_done")
   createdAt DateTime @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
 
-  user Users? @relation(fields: [userId], references: [userId] ,onDelete: SetNull)
+  user Users? @relation(fields: [userId], references: [id])
 
   answers SonminsuAnswers[]
   images SonminsuRequestImages[]
+  bookmarks SonminsuRequestBookmarks[]
+}
+
+model SonminsuRequestBookmarks {
+  userId Int @map("user_id")
+  requestId Int @map("request_id")
+
+  user Users @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requrest SonminsuRequests @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@id([userId,requestId])
 }
 
 model SonminsuRequestImages {
@@ -181,19 +204,19 @@ model SonminsuRequestImages {
   requestId Int? @map("request_id")
   url String
 
-  request SonminsuRequests? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  request SonminsuRequests? @relation(fields: [requestId], references: [id])
 }
 
 model SonminsuAnswers {
   id Int @id @default(autoincrement())
   userId Int? @map("user_id")
   requestId Int? @map("request_id")
-  content String
-  choosed Boolean @default(false)
+  isChoosed Boolean? @map("is_choosed")
   createdAt DateTime @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
 
-  user Users? @relation(fields: [userId], references: [userId], onDelete: SetNull)
-  request SonminsuRequests? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  user Users? @relation(fields: [userId], references: [id])
+  request SonminsuRequests? @relation(fields: [requestId], references: [id])
 
   items SonminsuItems[]
 }
@@ -206,11 +229,13 @@ model SonminsuItems {
   imgUrl String @map("image_url")
   title String
   price String
-  registration Boolean @default(false)
+  groupName String @map("group_name")
+  artistName String @map("artist_name")
+  registration Boolean?
   createdAt DateTime @default(now()) @map("created_at")
 
-  feed Feeds? @relation(fields: [feedId], references: [id], onDelete: SetNull)
-  answer SonminsuAnswers? @relation(fields: [answerId], references: [id], onDelete: SetNull)
+  feed Feeds? @relation(fields: [feedId], references: [id])
+  answer SonminsuAnswers? @relation(fields: [answerId], references: [id])
 
   bucketItems BucketItems[]
 }
@@ -221,7 +246,7 @@ model Buckets {
   bucketName String @map("bucket_name")
   createdAt DateTime @default(now()) @map("created_at")
 
-  owner Users @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  owner Users @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   items BucketItems[]
 }
@@ -242,10 +267,10 @@ model Messages {
   userId Int? @map("user_id")
   content String
   createdAt DateTime @default(now()) @map("created_at")
-  deletedAt DateTime @default(dbgenerated("('1970-01-01T00:00:00.000Z')")) @map("deleted_at")
+  deletedAt DateTime? @map("deleted_at")
 
-  fandom Fandoms? @relation(fields: [fandomId], references: [id], onDelete: SetNull)
-  author Users? @relation(fields: [userId], references: [userId], onDelete: SetNull)
+  fandom Fandoms? @relation(fields: [fandomId], references: [id])
+  author Users? @relation(fields: [userId], references: [id])
 
   files MessageFiles[]
 }
@@ -255,14 +280,16 @@ model MessageFiles {
   messageId Int? @map("message_id")
   url String
   createdAt DateTime @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
 
-  message Messages? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  message Messages? @relation(fields: [messageId], references: [id])
 }
 
 model ReadedMessages {
   userId Int @id @map("user_id")
   fandomId Int @map("fandom_id")
-  messageId Int @map("message_id")
+  messageId Int @default(0) @map("message_id")
+  inRoomMessage_id Int @default(0) @map("in_room_message_id")
 
-  user Users @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  user Users @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

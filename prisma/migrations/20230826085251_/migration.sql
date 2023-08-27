@@ -3,22 +3,24 @@ CREATE TABLE "Auth" (
     "id" SERIAL NOT NULL,
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
+    "user_name" TEXT,
+    "birth_date" TEXT,
+    "phone_number" TEXT,
 
     CONSTRAINT "Auth_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Users" (
-    "user_id" INTEGER NOT NULL,
-    "user_name" TEXT,
+    "id" SERIAL NOT NULL,
+    "auth_id" INTEGER,
     "nick_name" TEXT,
     "introduction" TEXT,
     "profile_image_url" TEXT,
-    "birth_date" TEXT,
-    "phone_number" TEXT,
-    "created_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" TIMESTAMP(3),
 
-    CONSTRAINT "Users_pkey" PRIMARY KEY ("user_id")
+    CONSTRAINT "Users_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -32,10 +34,11 @@ CREATE TABLE "Follows" (
 -- CreateTable
 CREATE TABLE "Fandoms" (
     "id" SERIAL NOT NULL,
-    "user_id" INTEGER NOT NULL,
+    "user_id" INTEGER,
     "fandom_name" TEXT NOT NULL,
     "thumbnail_image_url" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "Fandoms_pkey" PRIMARY KEY ("id")
 );
@@ -55,6 +58,7 @@ CREATE TABLE "FandomAnnouncements" (
     "user_id" INTEGER,
     "content" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "FandomAnnouncements_pkey" PRIMARY KEY ("id")
 );
@@ -73,8 +77,10 @@ CREATE TABLE "Feeds" (
     "user_id" INTEGER,
     "fandom_id" INTEGER,
     "content" TEXT NOT NULL,
+    "group_name" TEXT NOT NULL,
+    "artist_name" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "deleted_at" TIMESTAMP(3) NOT NULL DEFAULT ('1970-01-01T00:00:00.000Z'),
+    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "Feeds_pkey" PRIMARY KEY ("id")
 );
@@ -116,11 +122,11 @@ CREATE TABLE "Likes" (
 CREATE TABLE "Comments" (
     "id" SERIAL NOT NULL,
     "feed_id" INTEGER,
-    "parentId" INTEGER,
+    "parent_id" INTEGER,
     "user_id" INTEGER,
     "content" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "deleted_at" TIMESTAMP(3) NOT NULL DEFAULT ('1970-01-01T00:00:00.000Z'),
+    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "Comments_pkey" PRIMARY KEY ("id")
 );
@@ -131,10 +137,21 @@ CREATE TABLE "SonminsuRequests" (
     "user_id" INTEGER,
     "title" TEXT NOT NULL,
     "content" TEXT NOT NULL,
-    "done" BOOLEAN NOT NULL DEFAULT false,
+    "group_name" TEXT NOT NULL,
+    "artist_name" TEXT NOT NULL,
+    "is_done" BOOLEAN,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "SonminsuRequests_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "SonminsuRequestBookmarks" (
+    "user_id" INTEGER NOT NULL,
+    "request_id" INTEGER NOT NULL,
+
+    CONSTRAINT "SonminsuRequestBookmarks_pkey" PRIMARY KEY ("user_id","request_id")
 );
 
 -- CreateTable
@@ -151,9 +168,9 @@ CREATE TABLE "SonminsuAnswers" (
     "id" SERIAL NOT NULL,
     "user_id" INTEGER,
     "request_id" INTEGER,
-    "content" TEXT NOT NULL,
-    "choosed" BOOLEAN NOT NULL DEFAULT false,
+    "is_choosed" BOOLEAN,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "SonminsuAnswers_pkey" PRIMARY KEY ("id")
 );
@@ -167,7 +184,9 @@ CREATE TABLE "SonminsuItems" (
     "image_url" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "price" TEXT NOT NULL,
-    "registration" BOOLEAN NOT NULL DEFAULT false,
+    "group_name" TEXT NOT NULL,
+    "artist_name" TEXT NOT NULL,
+    "registration" BOOLEAN,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "SonminsuItems_pkey" PRIMARY KEY ("id")
@@ -198,7 +217,7 @@ CREATE TABLE "Messages" (
     "user_id" INTEGER,
     "content" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "deleted_at" TIMESTAMP(3) NOT NULL DEFAULT ('1970-01-01T00:00:00.000Z'),
+    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "Messages_pkey" PRIMARY KEY ("id")
 );
@@ -209,6 +228,7 @@ CREATE TABLE "MessageFiles" (
     "message_id" INTEGER,
     "url" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "MessageFiles_pkey" PRIMARY KEY ("id")
 );
@@ -217,7 +237,8 @@ CREATE TABLE "MessageFiles" (
 CREATE TABLE "ReadedMessages" (
     "user_id" INTEGER NOT NULL,
     "fandom_id" INTEGER NOT NULL,
-    "message_id" INTEGER NOT NULL,
+    "message_id" INTEGER NOT NULL DEFAULT 0,
+    "in_room_message_id" INTEGER NOT NULL DEFAULT 0,
 
     CONSTRAINT "ReadedMessages_pkey" PRIMARY KEY ("user_id")
 );
@@ -226,16 +247,16 @@ CREATE TABLE "ReadedMessages" (
 CREATE UNIQUE INDEX "HashTags_tag_key" ON "HashTags"("tag");
 
 -- AddForeignKey
-ALTER TABLE "Users" ADD CONSTRAINT "Users_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Auth"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Users" ADD CONSTRAINT "Users_auth_id_fkey" FOREIGN KEY ("auth_id") REFERENCES "Auth"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Follows" ADD CONSTRAINT "Follows_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Follows" ADD CONSTRAINT "Follows_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Follows" ADD CONSTRAINT "Follows_follow_id_fkey" FOREIGN KEY ("follow_id") REFERENCES "Users"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Follows" ADD CONSTRAINT "Follows_follow_id_fkey" FOREIGN KEY ("follow_id") REFERENCES "Users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Fandoms" ADD CONSTRAINT "Fandoms_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("user_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Fandoms" ADD CONSTRAINT "Fandoms_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "FandomRanks" ADD CONSTRAINT "FandomRanks_fandom_id_fkey" FOREIGN KEY ("fandom_id") REFERENCES "Fandoms"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -244,16 +265,16 @@ ALTER TABLE "FandomRanks" ADD CONSTRAINT "FandomRanks_fandom_id_fkey" FOREIGN KE
 ALTER TABLE "FandomAnnouncements" ADD CONSTRAINT "FandomAnnouncements_fandom_id_fkey" FOREIGN KEY ("fandom_id") REFERENCES "Fandoms"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "FandomAnnouncements" ADD CONSTRAINT "FandomAnnouncements_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("user_id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "FandomAnnouncements" ADD CONSTRAINT "FandomAnnouncements_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Subscribes" ADD CONSTRAINT "Subscribes_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Subscribes" ADD CONSTRAINT "Subscribes_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Subscribes" ADD CONSTRAINT "Subscribes_fandom_id_fkey" FOREIGN KEY ("fandom_id") REFERENCES "Fandoms"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Feeds" ADD CONSTRAINT "Feeds_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("user_id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Feeds" ADD CONSTRAINT "Feeds_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Feeds" ADD CONSTRAINT "Feeds_fandom_id_fkey" FOREIGN KEY ("fandom_id") REFERENCES "Fandoms"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -268,7 +289,7 @@ ALTER TABLE "FeedHashTags" ADD CONSTRAINT "FeedHashTags_hashTag_id_fkey" FOREIGN
 ALTER TABLE "FeedImages" ADD CONSTRAINT "FeedImages_feed_id_fkey" FOREIGN KEY ("feed_id") REFERENCES "Feeds"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Likes" ADD CONSTRAINT "Likes_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Likes" ADD CONSTRAINT "Likes_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Likes" ADD CONSTRAINT "Likes_feed_id_fkey" FOREIGN KEY ("feed_id") REFERENCES "Feeds"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -277,19 +298,25 @@ ALTER TABLE "Likes" ADD CONSTRAINT "Likes_feed_id_fkey" FOREIGN KEY ("feed_id") 
 ALTER TABLE "Comments" ADD CONSTRAINT "Comments_feed_id_fkey" FOREIGN KEY ("feed_id") REFERENCES "Feeds"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Comments" ADD CONSTRAINT "Comments_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Comments"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Comments" ADD CONSTRAINT "Comments_parent_id_fkey" FOREIGN KEY ("parent_id") REFERENCES "Comments"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Comments" ADD CONSTRAINT "Comments_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("user_id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Comments" ADD CONSTRAINT "Comments_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SonminsuRequests" ADD CONSTRAINT "SonminsuRequests_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("user_id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "SonminsuRequests" ADD CONSTRAINT "SonminsuRequests_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SonminsuRequestBookmarks" ADD CONSTRAINT "SonminsuRequestBookmarks_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SonminsuRequestBookmarks" ADD CONSTRAINT "SonminsuRequestBookmarks_request_id_fkey" FOREIGN KEY ("request_id") REFERENCES "SonminsuRequests"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "SonminsuRequestImages" ADD CONSTRAINT "SonminsuRequestImages_request_id_fkey" FOREIGN KEY ("request_id") REFERENCES "SonminsuRequests"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SonminsuAnswers" ADD CONSTRAINT "SonminsuAnswers_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("user_id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "SonminsuAnswers" ADD CONSTRAINT "SonminsuAnswers_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "SonminsuAnswers" ADD CONSTRAINT "SonminsuAnswers_request_id_fkey" FOREIGN KEY ("request_id") REFERENCES "SonminsuRequests"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -301,7 +328,7 @@ ALTER TABLE "SonminsuItems" ADD CONSTRAINT "SonminsuItems_feed_id_fkey" FOREIGN 
 ALTER TABLE "SonminsuItems" ADD CONSTRAINT "SonminsuItems_answer_id_fkey" FOREIGN KEY ("answer_id") REFERENCES "SonminsuAnswers"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Buckets" ADD CONSTRAINT "Buckets_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Buckets" ADD CONSTRAINT "Buckets_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "BucketItems" ADD CONSTRAINT "BucketItems_bucket_id_fkey" FOREIGN KEY ("bucket_id") REFERENCES "Buckets"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -313,10 +340,10 @@ ALTER TABLE "BucketItems" ADD CONSTRAINT "BucketItems_item_id_fkey" FOREIGN KEY 
 ALTER TABLE "Messages" ADD CONSTRAINT "Messages_fandom_id_fkey" FOREIGN KEY ("fandom_id") REFERENCES "Fandoms"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Messages" ADD CONSTRAINT "Messages_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("user_id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Messages" ADD CONSTRAINT "Messages_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "MessageFiles" ADD CONSTRAINT "MessageFiles_message_id_fkey" FOREIGN KEY ("message_id") REFERENCES "Messages"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ReadedMessages" ADD CONSTRAINT "ReadedMessages_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ReadedMessages" ADD CONSTRAINT "ReadedMessages_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

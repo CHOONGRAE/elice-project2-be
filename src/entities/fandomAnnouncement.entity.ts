@@ -6,4 +6,5 @@ export class FandomAnnouncementEntity implements FandomAnnouncements {
   userId: number;
   content: string;
   createdAt: Date;
+  deletedAt: Date;
 }

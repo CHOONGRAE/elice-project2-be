@@ -1,13 +1,11 @@
-import { Users as UserModel } from '@prisma/client';
+import { Users } from '@prisma/client';
 
-export class UserEntity implements UserModel {
-  userId: number;
-  userName: string;
+export class UserEntity implements Users {
+  id: number;
+  authId: number;
   nickName: string;
   introduction: string;
-  profileImgUrl: string;
-  birthDate: string;
-  phoneNumber: string;
-  selectedAnswerCount: number;
+  image: string;
   createdAt: Date;
+  deletedAt: Date;
 }
