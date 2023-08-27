@@ -373,6 +373,30 @@ export class UserController {
     );
   }
 
+  @Get('buckets')
+  @ApiOperation({
+    summary: '버킷 목록',
+  })
+  async getBuckets() {}
+
+  @Post('buckets')
+  @ApiOperation({
+    summary: '버킷 생성',
+  })
+  async createBucket() {}
+
+  @Patch('buckets/:bucketId')
+  @ApiOperation({
+    summary: '버킷 수정',
+  })
+  async updateBucket() {}
+
+  @Delete('buckets/:bucketId')
+  @ApiOperation({
+    summary: '버킷 삭제',
+  })
+  async deleteBucket() {}
+
   @Get('feeds')
   @ApiOperation({
     summary: '피드 목록',
