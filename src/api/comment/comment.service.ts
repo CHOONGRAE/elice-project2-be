@@ -49,7 +49,13 @@ export class CommentService {
             deletedAt: null,
           },
           select: this.selectField,
+          orderBy: {
+            createdAt: 'desc',
+          },
         },
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
 
