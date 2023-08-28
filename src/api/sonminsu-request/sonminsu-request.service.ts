@@ -2,7 +2,11 @@ import { CreateSonminsuRequestDto } from '@dto/sonminsuRequestDto/create-sonmins
 import { GetSonminsuRequestDto } from '@dto/sonminsuRequestDto/get-sonmisuRequest.dto';
 import { PaginateSonminsuRequestDto } from '@dto/sonminsuRequestDto/paginate-sonminsuRequest.dto';
 import { UpdateSonminsuRequestDto } from '@dto/sonminsuRequestDto/update-sonminsuRequest.dto';
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { PrismaService } from '@prisma/prisma.service';
@@ -90,7 +94,7 @@ export class SonminsuRequestService {
         },
       })
       .catch(() => {
-        throw new ConflictException();
+        throw new ForbiddenException();
       });
   }
 
