@@ -4,6 +4,7 @@ import { SearchSonminsuItemDto } from '@dto/sonminsuItemDto/search-sonminsuItem.
 import { UpdateSonminsuItemDto } from '@dto/sonminsuItemDto/update-sonminsuItem.dto';
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 import { ScraperService } from 'src/scraper/scraper.service';
 
@@ -69,149 +70,124 @@ export class SonminsuItemService {
   async getSonminsuItems(pagination: PaginateSonminsuItemDto) {
     const { page, perPage } = pagination;
 
-    const [result, totalCount] = await this.prisma.$transaction([
-      this.prisma.sonminsuItems.findMany({
-        skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
-        take: Math.max(0, perPage || 10),
-        where: {
-          OR: [
-            {
-              feedId: { not: null },
-              feed: {
-                deletedAt: null,
-              },
+    const result = await this.prisma.sonminsuItems.findMany({
+      skip: perPage * (page - 1),
+      take: perPage,
+      where: {
+        OR: [
+          {
+            feedId: { not: null },
+            feed: {
+              deletedAt: null,
             },
-            {
-              answerId: { not: null },
-              registration: true,
+          },
+          {
+            answerId: { not: null },
+            registration: true,
+          },
+        ],
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: this.selectField,
+    });
+
+    const totalCount = await this.prisma.sonminsuItems.count({
+      where: {
+        OR: [
+          {
+            feedId: { not: null },
+            feed: {
+              deletedAt: null,
             },
-          ],
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        select: this.selectField,
-      }),
-      this.prisma.sonminsuItems.count({
-        where: {
-          OR: [
-            {
-              feedId: { not: null },
-              feed: {
-                deletedAt: null,
-              },
-            },
-            {
-              answerId: { not: null },
-              registration: true,
-            },
-          ],
-        },
-      }),
-    ]);
+          },
+          {
+            answerId: { not: null },
+            registration: true,
+          },
+        ],
+      },
+    });
 
     return {
       data: result,
-      totalPage: Math.ceil(totalCount / (perPage || 10)),
-      currentPage: page || 1,
+      totalPage: Math.ceil(totalCount / perPage),
+      currentPage: page,
     };
   }
 
   async getSonminsuItemsBySearch(searchSonminsuItemDto: SearchSonminsuItemDto) {
     const { search, page, perPage } = searchSonminsuItemDto;
 
-    const [result, totalCount] = await this.prisma.$transaction([
-      this.prisma.sonminsuItems.findMany({
-        skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
-        take: Math.max(0, perPage || 10),
-        where: {
-          AND: [
+    const itemSearchWhere: Prisma.SonminsuItemsWhereInput = {
+      AND: [
+        {
+          OR: [
             {
-              OR: [
-                {
-                  title: {
-                    contains: search,
-                  },
-                },
-                {
-                  groupName: {
-                    contains: search,
-                  },
-                },
-                {
-                  artistName: {
-                    contains: search,
-                  },
-                },
-              ],
+              title: {
+                contains: search,
+              },
             },
             {
-              OR: [
-                {
-                  feedId: { not: null },
-                  feed: {
-                    deletedAt: null,
-                  },
-                },
-                {
-                  answerId: { not: null },
-                  registration: true,
-                },
-              ],
+              groupName: {
+                contains: search,
+              },
+            },
+            {
+              artistName: {
+                contains: search,
+              },
             },
           ],
         },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        select: this.selectField,
-      }),
-      this.prisma.sonminsuItems.count({
-        where: {
-          AND: [
+        {
+          OR: [
             {
-              OR: [
-                {
-                  title: {
-                    contains: search,
-                  },
-                },
-                {
-                  groupName: {
-                    contains: search,
-                  },
-                },
-                {
-                  artistName: {
-                    contains: search,
-                  },
-                },
-              ],
+              feedId: { not: null },
+              feed: {
+                deletedAt: null,
+              },
             },
             {
-              OR: [
-                {
-                  feedId: { not: null },
-                  feed: {
-                    deletedAt: null,
-                  },
-                },
-                {
-                  answerId: { not: null },
-                  registration: true,
-                },
-              ],
+              answerId: { not: null },
+              registration: true,
             },
           ],
         },
-      }),
-    ]);
+      ],
+    };
+
+    const result = await this.prisma.sonminsuItems.findMany({
+      skip: perPage * (page - 1),
+      take: perPage,
+      where: itemSearchWhere,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: this.selectField,
+    });
+
+    const totalCount = await this.prisma.sonminsuItems.count({
+      where: itemSearchWhere,
+    });
 
     return {
       data: result,
-      totalPage: Math.ceil(totalCount / (perPage || 10)),
-      currentPage: page || 1,
+      totalPage: Math.ceil(totalCount / perPage),
+      currentPage: page,
     };
+  }
+
+  async getSonminsuItemById(id: number) {
+    const item = await this.prisma.sonminsuItems.findUnique({
+      where: {
+        id,
+      },
+      select: this.selectField,
+    });
+
+    return { data: item };
   }
 
   private readonly selectField = {

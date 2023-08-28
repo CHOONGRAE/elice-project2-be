@@ -1,14 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional } from 'class-validator';
+import { IsNumber, IsOptional, Min } from 'class-validator';
 
 export class PaginateSonminsuItemDto {
   @IsOptional()
-  @ApiProperty({ required: false })
   @IsNumber()
-  page: number;
+  @Min(1)
+  @ApiProperty({ required: false })
+  page?: number = 1;
 
   @IsOptional()
-  @ApiProperty({ required: false })
   @IsNumber()
-  perPage: number;
+  @Min(0)
+  @ApiProperty({ required: false })
+  perPage?: number = 10;
 }

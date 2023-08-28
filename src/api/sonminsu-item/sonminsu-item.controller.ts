@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { SonminsuItemService } from './sonminsu-item.service';
 import { PaginateSonminsuItemDto } from '@dto/sonminsuItemDto/paginate-sonminsuItem.dto';
 import { ApiTags } from '@nestjs/swagger';
@@ -24,5 +24,10 @@ export class SonminsuItemController {
     return await this.sonminsuItemService.getSonminsuItemsBySearch(
       searchSonminsuItemDto,
     );
+  }
+
+  @Get(':itemId')
+  async getSonminsuItemById(@Param('itemId') id: number) {
+    return await this.sonminsuItemService.getSonminsuItemById(id);
   }
 }
