@@ -115,7 +115,7 @@ export class SonminsuAnswerService {
       select: {
         id: true,
         nickName: true,
-        profileImgUrl: true,
+        image: true,
         _count: {
           select: {
             sonminsuAnswers: {
