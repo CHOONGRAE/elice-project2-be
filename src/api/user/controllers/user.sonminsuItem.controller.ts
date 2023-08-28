@@ -1,8 +1,19 @@
 import { BucketItemService } from '@api/bucket-item/bucket-item.service';
 import { SonminsuItemService } from '@api/sonminsu-item/sonminsu-item.service';
+import { User } from '@decorator/User.decorator';
 import { CreateSonminsuItemDto } from '@dto/sonminsuItemDto/create-sonminsuItem.dto';
+import { PaginateSonminsuItemDto } from '@dto/sonminsuItemDto/paginate-sonminsuItem.dto';
 import { AuthGuard } from '@guards/auth.guard';
-import { Body, Controller, Param, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @Controller({
@@ -17,6 +28,14 @@ export class UserSonminsuItemController {
     private readonly sonminsuItemService: SonminsuItemService,
     private readonly bucketItemService: BucketItemService,
   ) {}
+
+  @Get()
+  @ApiOperation({
+    summary: '손민수 아이템 목록 (버킷에 담겻는지 정보 O)',
+  })
+  async get(@User() userId: number, @Query() test: PaginateSonminsuItemDto) {
+    return this.sonminsuItemService.getSonminsuItemsByUser(userId, test);
+  }
 
   @Post()
   @ApiOperation({
