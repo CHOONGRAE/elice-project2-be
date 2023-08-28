@@ -265,6 +265,7 @@ export class SonminsuRequestService {
       content: true,
       groupName: true,
       artistName: true,
+      createdAt: true,
       user: {
         select: {
           id: true,
