@@ -74,7 +74,7 @@ export class UserSonminsuAnswerController {
   })
   async chooseSonminsuAnswer(
     @User() userId: number,
-    @Param('requestId') answerId: number,
+    @Param('answerId') answerId: number,
   ) {
     await this.sonminsuAnswerService.chooseSonminsuAnswer(answerId, userId);
   }
