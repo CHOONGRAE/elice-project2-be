@@ -10,6 +10,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -125,6 +126,17 @@ export class UserSonminsuRequsetsController {
       userId,
       { ...updateSonminsuRequestDto, image },
     );
+  }
+
+  @Delete(':requestId')
+  @ApiOperation({
+    summary: '의뢰 삭제',
+  })
+  async deleteSonminsuRequest(
+    @User() userId: number,
+    @Param('requestId') id: number,
+  ) {
+    await this.sonminsuRequestService.deleteSonminsuRequest(id, userId);
   }
 
   @Put(':requestId/bookmarks')
