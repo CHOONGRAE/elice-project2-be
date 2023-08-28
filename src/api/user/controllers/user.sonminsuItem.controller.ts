@@ -30,6 +30,9 @@ export class UserSonminsuItemController {
   ) {}
 
   @Get()
+  @ApiOperation({
+    summary: '손민수 아이템 목록 (버킷에 담겻는지 정보 O)',
+  })
   async get(@User() userId: number, @Query() test: PaginateSonminsuItemDto) {
     return this.sonminsuItemService.getSonminsuItemsByUser(userId, test);
   }
