@@ -117,6 +117,32 @@ export class SonminsuItemService {
     };
   }
 
+  async getSonminsuItemsByUser(
+    userId: number,
+    pagination: PaginateSonminsuItemDto,
+  ) {
+    const { page, perPage } = pagination;
+
+    const results: Array<
+      Prisma.SonminsuItemsFieldRefs & { isInBucket: number | null }
+    > = await this.prisma.$queryRaw`
+      SELECT I.id, I.origin_url AS "originUrl", I.image_url AS "imageUrl", I.title, I.price, I.created_at AS "createdAt",
+      CASE WHEN B.user_id IS NOT NULL THEN 1 ELSE 0 END AS "isInBucket"
+      FROM public."SonminsuItems" AS I
+      LEFT JOIN public."BucketItems" AS BI ON I.id = BI.item_id
+      LEFT JOIN public."Buckets" AS B ON BI.bucket_id = B.id AND B.user_id = ${userId}
+      ORDER BY I.created_at DESC
+      LIMIT ${perPage} OFFSET ${perPage * (page - 1)}
+    `;
+
+    return {
+      data: results.map(({ isInBucket, ...result }) => ({
+        ...result,
+        isInBucket: !!isInBucket,
+      })),
+    };
+  }
+
   async getSonminsuItemsBySearch(searchSonminsuItemDto: SearchSonminsuItemDto) {
     const { search, page, perPage } = searchSonminsuItemDto;
 
