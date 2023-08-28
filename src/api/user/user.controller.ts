@@ -1,9 +1,10 @@
 import { AuthGuard } from '@guards/auth.guard';
-import { Controller, Param, Put, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { User } from '@decorator/User.decorator';
 import { FollowService } from '@api/follow/follow.service';
+import { PaginateFollowDto } from '@dto/followDto/paginate-follow.dto';
 
 @Controller({
   path: 'users',
@@ -17,6 +18,28 @@ export class UserController {
     private readonly userService: UserService,
     private readonly followService: FollowService,
   ) {}
+
+  @Get('follows')
+  @ApiOperation({
+    summary: '팔로우 목록',
+  })
+  async getFollows(
+    @User() userId: number,
+    @Query() pagination: PaginateFollowDto,
+  ) {
+    return await this.followService.getFollows(userId, pagination);
+  }
+
+  @Get('followers')
+  @ApiOperation({
+    summary: '팔로워 목록',
+  })
+  async getFollowers(
+    @User() userId: number,
+    @Query() pagination: PaginateFollowDto,
+  ) {
+    return await this.followService.getFollowers(userId, pagination);
+  }
 
   @Put('follows/:followId')
   @ApiOperation({
