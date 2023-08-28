@@ -104,6 +104,11 @@ export class FandomAnnouncementService {
         image: true,
       },
     },
+    fandom: {
+      select: {
+        fandomName: true,
+      },
+    },
     content: true,
     createdAt: true,
   };
