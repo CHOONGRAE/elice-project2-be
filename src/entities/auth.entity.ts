@@ -7,4 +7,6 @@ export class AuthEntity implements Auth {
   userName: string;
   birthDate: string;
   phoneNumber: string;
+  kakao: string;
+  google: string;
 }
