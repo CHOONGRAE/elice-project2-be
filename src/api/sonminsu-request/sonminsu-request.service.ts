@@ -174,17 +174,17 @@ export class SonminsuRequestService {
       take: Math.max(0, perPage || 10),
       where: {
         userId,
-        requrest: {
+        request: {
           deletedAt: null,
         },
       },
       select: {
-        requrest: {
+        request: {
           select: this.listSelectField,
         },
       },
       orderBy: {
-        requrest: {
+        request: {
           createdAt: 'desc',
         },
       },
@@ -193,14 +193,14 @@ export class SonminsuRequestService {
     const totalCount = await this.prisma.sonminsuRequestBookmarks.count({
       where: {
         userId,
-        requrest: {
+        request: {
           deletedAt: null,
         },
       },
     });
 
     return {
-      data: result.map(({ requrest }) => this.transFormData(requrest)),
+      data: result.map(({ request }) => this.transFormData(request)),
       totalPage: Math.ceil(totalCount / (perPage || 10)),
       currentPage: page || 1,
     };

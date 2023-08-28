@@ -2,10 +2,12 @@
 CREATE TABLE "Auth" (
     "id" SERIAL NOT NULL,
     "email" TEXT NOT NULL,
-    "password" TEXT NOT NULL,
+    "password" TEXT,
     "user_name" TEXT,
     "birth_date" TEXT,
     "phone_number" TEXT,
+    "kakao" TEXT,
+    "google" TEXT,
 
     CONSTRAINT "Auth_pkey" PRIMARY KEY ("id")
 );
@@ -242,6 +244,9 @@ CREATE TABLE "ReadedMessages" (
 
     CONSTRAINT "ReadedMessages_pkey" PRIMARY KEY ("user_id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Auth_email_key" ON "Auth"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "HashTags_tag_key" ON "HashTags"("tag");
