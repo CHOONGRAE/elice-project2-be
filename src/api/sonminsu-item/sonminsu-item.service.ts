@@ -71,8 +71,8 @@ export class SonminsuItemService {
     const { page, perPage } = pagination;
 
     const result = await this.prisma.sonminsuItems.findMany({
-      skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
-      take: Math.max(0, perPage || 10),
+      skip: perPage * (page - 1),
+      take: perPage,
       where: {
         OR: [
           {
@@ -112,8 +112,8 @@ export class SonminsuItemService {
 
     return {
       data: result,
-      totalPage: Math.ceil(totalCount / (perPage || 10)),
-      currentPage: page || 1,
+      totalPage: Math.ceil(totalCount / perPage),
+      currentPage: page,
     };
   }
 
@@ -159,8 +159,8 @@ export class SonminsuItemService {
     };
 
     const result = await this.prisma.sonminsuItems.findMany({
-      skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
-      take: Math.max(0, perPage || 10),
+      skip: perPage * (page - 1),
+      take: perPage,
       where: itemSearchWhere,
       orderBy: {
         createdAt: 'desc',
@@ -174,8 +174,8 @@ export class SonminsuItemService {
 
     return {
       data: result,
-      totalPage: Math.ceil(totalCount / (perPage || 10)),
-      currentPage: page || 1,
+      totalPage: Math.ceil(totalCount / perPage),
+      currentPage: page,
     };
   }
 
