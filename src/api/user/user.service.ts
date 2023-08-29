@@ -1,3 +1,4 @@
+import { UpdateAuthDto } from '@dto/authDto/update-auth.dto';
 import { UpdateUserDto } from '@dto/userDto/update-user.dto';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
@@ -95,6 +96,31 @@ export class UserService {
         id,
         authId: { not: null },
         deletedAt: null,
+      },
+      select: {
+        auth: {
+          select: {
+            email: true,
+            phoneNumber: true,
+            birthDate: true,
+            userName: true,
+          },
+        },
+      },
+    });
+
+    return { data: auth.auth };
+  }
+
+  async updateAuthInfo(id: number, updateAuthDto: UpdateAuthDto) {
+    const auth = await this.prisma.users.update({
+      where: {
+        id,
+        authId: { not: null },
+        deletedAt: null,
+      },
+      data: {
+        ...updateAuthDto,
       },
       select: {
         auth: {

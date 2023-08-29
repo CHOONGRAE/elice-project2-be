@@ -22,6 +22,7 @@ import { UserService } from './user.service';
 import { User } from '@decorator/User.decorator';
 import { UpdateUserDto } from '@dto/userDto/update-user.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { UpdateAuthDto } from '@dto/authDto/update-auth.dto';
 
 @Controller({
   path: '/',
@@ -82,7 +83,9 @@ export class UserController {
   @ApiOperation({
     summary: '개인 정보 가져오기',
   })
-  async getAuthInfo() {}
+  async getAuthInfo(@User() id: number) {
+    return await this.userService.getAuthInfo(id);
+  }
 
   @Patch('users/authInfo')
   @UseGuards(AuthGuard)
@@ -90,7 +93,12 @@ export class UserController {
   @ApiOperation({
     summary: '개인 정보 수정',
   })
-  async updateAuthInfo() {}
+  async updateAuthInfo(
+    @Body() updateAuthDto: UpdateAuthDto,
+    @User() id: number,
+  ) {
+    return await this.userService.updateAuthInfo(id, updateAuthDto);
+  }
 
   @Post('users/password')
   @UseGuards(AuthGuard)
