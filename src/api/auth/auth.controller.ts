@@ -9,6 +9,8 @@ import {
   Req,
   UnauthorizedException,
   UseInterceptors,
+  UploadedFile,
+  Delete,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
@@ -22,6 +24,7 @@ import { SendVerificationCodeDto } from '@dto/authDto/send-verificationCode.dto'
 import { ConfirmVerificationCodeDto } from '@dto/authDto/confirm-verificationCode.dto';
 import { CreateAuthDto } from '@dto/authDto/create-auth.dto';
 import { SigninDto } from '@dto/authDto/signin.dto';
+import { InitAuthDto } from '@dto/authDto/init-auth.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller({
@@ -95,28 +98,102 @@ export class AuthController {
     status: 400,
     description: 'Bad Request - value 확인바람',
   })
-  async signup(@Body() signupDto: CreateAuthDto, @Res() res: Response) {
-    const { at, rt } = await this.authService.signup(signupDto);
-    return await this.sendToken(res, at, rt);
+  async signup(@Body() signupDto: CreateAuthDto) {
+    await this.authService.signup(signupDto);
   }
 
   @Post('sign-in')
-  @HttpCode(204)
   @ApiOperation({
     summary: '로그인 API',
     description: '로그인',
   })
   @ApiResponse({
-    status: 204,
+    status: 200,
     description: '로그인 성공',
   })
   @ApiResponse({
-    status: 401,
+    status: 204,
+    description: '로그인 성공 - 초기화 필요',
+  })
+  @ApiResponse({
+    status: 400,
     description: '로그인 실패, 아이디 비밀번호 확인 바람',
   })
   async signin(@Body() signinDto: SigninDto, @Res() res: Response) {
-    const { at, rt } = await this.authService.signin(signinDto);
-    return this.sendToken(res, at, rt);
+    const result = await this.authService.signin(signinDto);
+
+    if (!result.data) {
+      const { it } = result;
+
+      res.cookie('it', it, {
+        httpOnly: true,
+        maxAge: 1000 * 60 * 5,
+      });
+
+      return res.status(204).end();
+    }
+
+    const {
+      data,
+      token: { at, rt },
+    } = result;
+
+    this.setToken(res, at, rt);
+
+    return res.json(data);
+  }
+
+  @Post('init-info')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      fileFilter: (req, file, cb) => {
+        if (/image/i.test(file.mimetype)) {
+          file.originalname = Buffer.from(file.originalname, 'latin1').toString(
+            'utf-8',
+          );
+          cb(null, true);
+        } else cb(null, true);
+      },
+    }),
+  )
+  @ApiOperation({
+    summary: '유저 정보 초기 설정',
+  })
+  async initInformation(
+    @Req() req: Request,
+    @Res() res: Response,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() initDto: InitAuthDto,
+  ) {
+    const { it } = req.cookies;
+
+    if (!it) throw new UnauthorizedException();
+
+    const { at, rt } = await this.authService.initInformation(it, {
+      file,
+      ...initDto,
+    });
+
+    this.setToken(res, at, rt);
+
+    res.clearCookie('it');
+
+    res.end();
+  }
+
+  @Delete('sign-out')
+  @ApiOperation({
+    summary: '로그아웃',
+  })
+  async signout(@Req() req: Request, @Res() res: Response) {
+    const { rt } = req.cookies;
+
+    if (!rt) throw new UnauthorizedException();
+
+    await this.authService.signout(rt);
+
+    res.clearCookie('rt').end();
   }
 
   @Get('auto-sign-in')
@@ -134,7 +211,9 @@ export class AuthController {
     description: '로그인 실패 토큰 만료',
   })
   async autoSignin(@Req() req: Request, @Res() res: Response) {
-    return await this.checkToken(req, res);
+    await this.checkToken(req, res);
+
+    return res.end();
   }
 
   @Get('refresh-token')
@@ -152,7 +231,9 @@ export class AuthController {
     description: '토큰 만료',
   })
   async refreshToken(@Req() req: Request, @Res() res: Response) {
-    return await this.checkToken(req, res);
+    await this.checkToken(req, res);
+
+    return res.end();
   }
 
   private async checkToken(req: Request, res: Response) {
@@ -162,15 +243,14 @@ export class AuthController {
 
     const { at, rt: newRt } = await this.authService.refreshToken(rt);
 
-    return this.sendToken(res, at, newRt);
+    return this.setToken(res, at, newRt);
   }
 
-  private async sendToken(res: Response, at: string, rt: string) {
+  private setToken(res: Response, at: string, rt: string) {
     res.setHeader('Authorization', at);
     res.cookie('rt', rt, {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 14,
     });
-    res.end();
   }
 }
