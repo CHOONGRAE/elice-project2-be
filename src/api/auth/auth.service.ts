@@ -14,7 +14,6 @@ import { MailerService } from 'src/mailer/mailer.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { InitAuthDto } from '@dto/authDto/init-auth.dto';
-import { Prisma } from '@prisma/client';
 import { S3Service } from 'src/s3/s3.service';
 
 const ALPHABET = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
@@ -67,16 +66,23 @@ export class AuthService {
     if (!isVerificated) {
       throw new ConflictException();
     }
-
-    await this.redis.delete(email);
   }
 
   async signup(createAuthDto: CreateAuthDto) {
-    const hashedPassword = await bcrypt.hash(createAuthDto.password, 10);
+    const { code, email, password, userName, phoneNumber, birthDate } =
+      createAuthDto;
+    await this.confirmVerificationCode({ code, email });
+
+    await this.redis.delete(email);
+
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     await this.prisma.auth.create({
       data: {
-        ...createAuthDto,
+        email,
+        userName,
+        phoneNumber,
+        birthDate,
         password: hashedPassword,
       },
     });
@@ -167,12 +173,38 @@ export class AuthService {
               nickName: nickName || name,
               introduction,
               image: file && (await this.s3.uploadImage(file, `users/${id}/`)),
+              buckets: {
+                create: {
+                  bucketName: '나의 버킷 리스트',
+                },
+              },
+            },
+          },
+        },
+        include: {
+          users: {
+            where: {
+              deletedAt: null,
             },
           },
         },
       });
 
-      return await this.createTokens(result.id, email);
+      const {
+        users: [{ id: userId, nickName: nick, introduction: introduce, image }],
+      } = result;
+
+      const token = await this.createTokens(userId, email);
+
+      return {
+        data: {
+          userId,
+          nickName: nick,
+          introduction: introduce,
+          image,
+        },
+        token,
+      };
     } catch (e) {
       throw new UnauthorizedException();
     }
@@ -182,12 +214,7 @@ export class AuthService {
     const trimedRt = rt.replace(/bearer/i, '').trim();
 
     try {
-      const {
-        sub,
-        email,
-        key,
-        exp,
-      }: { sub: number; email: string; key: string; exp: number } =
+      const { key, exp }: { key: string; exp: number } =
         await this.jwt.verifyAsync(trimedRt);
 
       const checker = (await this.redis.get(key)) as string;

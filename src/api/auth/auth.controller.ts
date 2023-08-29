@@ -170,16 +170,21 @@ export class AuthController {
 
     if (!it) throw new UnauthorizedException();
 
-    const { at, rt } = await this.authService.initInformation(it, {
+    const result = await this.authService.initInformation(it, {
       file,
       ...initDto,
     });
+
+    const {
+      data,
+      token: { at, rt },
+    } = result;
 
     this.setToken(res, at, rt);
 
     res.clearCookie('it');
 
-    res.end();
+    return res.json(data);
   }
 
   @Delete('sign-out')
