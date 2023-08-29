@@ -2,11 +2,7 @@ import { CreateSonminsuRequestDto } from '@dto/sonminsuRequestDto/create-sonmins
 import { GetSonminsuRequestDto } from '@dto/sonminsuRequestDto/get-sonmisuRequest.dto';
 import { PaginateSonminsuRequestDto } from '@dto/sonminsuRequestDto/paginate-sonminsuRequest.dto';
 import { UpdateSonminsuRequestDto } from '@dto/sonminsuRequestDto/update-sonminsuRequest.dto';
-import {
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { PrismaService } from '@prisma/prisma.service';
@@ -52,8 +48,7 @@ export class SonminsuRequestService {
     userId: number,
     updateSonminsuRequestDto: UpdateSonminsuRequestDto,
   ) {
-    const { title, content, groupName, artistName, image } =
-      updateSonminsuRequestDto;
+    const { title, content } = updateSonminsuRequestDto;
 
     const updatedSonminsuRequest = await this.prisma.sonminsuRequests.update({
       where: {
@@ -64,14 +59,6 @@ export class SonminsuRequestService {
       data: {
         title,
         content,
-        groupName,
-        artistName,
-        images: {
-          deleteMany: {},
-          create: {
-            url: await this.s3.uploadImage(image, `requests/author-${userId}/`),
-          },
-        },
       },
       select: this.detailSelectField,
     });
@@ -102,8 +89,8 @@ export class SonminsuRequestService {
     const { done, page, perPage } = getSonminsuRequestDto;
 
     const result = await this.prisma.sonminsuRequests.findMany({
-      skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
-      take: Math.max(0, perPage || 10),
+      skip: perPage * (page - 1),
+      take: perPage,
       where: {
         isDone: done,
         deletedAt: null,
@@ -123,8 +110,8 @@ export class SonminsuRequestService {
 
     return {
       data: result.map(this.transFormData),
-      totalPage: Math.ceil(totalCount / (perPage || 10)),
-      currentPage: page || 1,
+      totalPage: Math.ceil(totalCount / perPage),
+      currentPage: page,
     };
   }
 
@@ -135,8 +122,8 @@ export class SonminsuRequestService {
     const { done, page, perPage } = getSonminsuRequestDto;
 
     const result = await this.prisma.sonminsuRequests.findMany({
-      skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
-      take: Math.max(0, perPage || 10),
+      skip: perPage * (page - 1),
+      take: perPage,
       where: {
         userId,
         isDone: done,
@@ -158,8 +145,8 @@ export class SonminsuRequestService {
 
     return {
       data: result.map(this.transFormData),
-      totalPage: Math.ceil(totalCount / (perPage || 10)),
-      currentPage: page || 1,
+      totalPage: Math.ceil(totalCount / perPage),
+      currentPage: page,
     };
   }
 
@@ -170,8 +157,8 @@ export class SonminsuRequestService {
     const { page, perPage } = paginateSonminsuRequestDto;
 
     const result = await this.prisma.sonminsuRequestBookmarks.findMany({
-      skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
-      take: Math.max(0, perPage || 10),
+      skip: perPage * (page - 1),
+      take: perPage,
       where: {
         userId,
         request: {
@@ -201,8 +188,8 @@ export class SonminsuRequestService {
 
     return {
       data: result.map(({ request }) => this.transFormData(request)),
-      totalPage: Math.ceil(totalCount / (perPage || 10)),
-      currentPage: page || 1,
+      totalPage: Math.ceil(totalCount / perPage),
+      currentPage: page,
     };
   }
 
@@ -212,7 +199,9 @@ export class SonminsuRequestService {
         id,
         deletedAt: null,
       },
-      select: this.detailSelectField,
+      select: {
+        ...this.detailSelectField,
+      },
     });
 
     return {
@@ -220,8 +209,33 @@ export class SonminsuRequestService {
     };
   }
 
-  private readonly transFormData = ({ images, ...value }) => ({
+  async getSonminsuRequestForUser(userId: number, id: number) {
+    const result = await this.prisma.sonminsuRequests.findUnique({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      select: {
+        bookmarks: {
+          where: {
+            userId: { equals: userId },
+          },
+          select: {
+            userId: true,
+          },
+        },
+        ...this.detailSelectField,
+      },
+    });
+
+    return {
+      data: this.transFormDetailData(result),
+    };
+  }
+
+  private readonly transFormData = ({ images, bookmarks, ...value }) => ({
     image: images[0]?.url || null,
+    isBookmark: !!bookmarks?.length,
     ...value,
   });
 
@@ -295,8 +309,12 @@ export class SonminsuRequestService {
         orderBy: {
           createdAt: 'desc',
         },
+        where: {
+          deletedAt: null,
+        },
         select: {
           id: true,
+          isChoosed: true,
           user: {
             select: {
               id: true,

@@ -1,3 +1,4 @@
+export * from './user.follow.controller';
 export * from './user.fandom.controller';
 export * from './user.fandomAnnouncement.controller';
 export * from './user.sonminsuRequest.controller';
