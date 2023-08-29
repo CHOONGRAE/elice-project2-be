@@ -15,6 +15,7 @@ import { FandomAnnouncementModule } from '@api/fandom-announcement/fandom-announ
 import { BucketModule } from '@api/bucket/bucket.module';
 import { BucketItemModule } from '@api/bucket-item/bucket-item.module';
 import * as Controllers from './controllers';
+import { S3Module } from '@s3';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import * as Controllers from './controllers';
     CommentModule,
     FollowModule,
     LikeModule,
+    S3Module,
   ],
   providers: [UserService],
   controllers: [UserController, ...Object.values(Controllers)],

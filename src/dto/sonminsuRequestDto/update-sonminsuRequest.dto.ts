@@ -1,9 +1,10 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { CreateSonminsuRequestDto } from './create-sonminsuRequest.dto';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-export class UpdateSonminsuRequestDto extends PartialType(
+export class UpdateSonminsuRequestDto extends OmitType(
   CreateSonminsuRequestDto,
+  ['artistName', 'groupName', 'image'] as const,
 ) {
   @IsOptional()
   @IsNotEmpty()
