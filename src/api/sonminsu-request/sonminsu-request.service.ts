@@ -102,8 +102,8 @@ export class SonminsuRequestService {
     const { done, page, perPage } = getSonminsuRequestDto;
 
     const result = await this.prisma.sonminsuRequests.findMany({
-      skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
-      take: Math.max(0, perPage || 10),
+      skip: perPage * (page - 1),
+      take: perPage,
       where: {
         isDone: done,
         deletedAt: null,
@@ -123,8 +123,8 @@ export class SonminsuRequestService {
 
     return {
       data: result.map(this.transFormData),
-      totalPage: Math.ceil(totalCount / (perPage || 10)),
-      currentPage: page || 1,
+      totalPage: Math.ceil(totalCount / perPage),
+      currentPage: page,
     };
   }
 
@@ -135,8 +135,8 @@ export class SonminsuRequestService {
     const { done, page, perPage } = getSonminsuRequestDto;
 
     const result = await this.prisma.sonminsuRequests.findMany({
-      skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
-      take: Math.max(0, perPage || 10),
+      skip: perPage * (page - 1),
+      take: perPage,
       where: {
         userId,
         isDone: done,
@@ -158,8 +158,8 @@ export class SonminsuRequestService {
 
     return {
       data: result.map(this.transFormData),
-      totalPage: Math.ceil(totalCount / (perPage || 10)),
-      currentPage: page || 1,
+      totalPage: Math.ceil(totalCount / perPage),
+      currentPage: page,
     };
   }
 
@@ -170,8 +170,8 @@ export class SonminsuRequestService {
     const { page, perPage } = paginateSonminsuRequestDto;
 
     const result = await this.prisma.sonminsuRequestBookmarks.findMany({
-      skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
-      take: Math.max(0, perPage || 10),
+      skip: perPage * (page - 1),
+      take: perPage,
       where: {
         userId,
         request: {
@@ -201,8 +201,8 @@ export class SonminsuRequestService {
 
     return {
       data: result.map(({ request }) => this.transFormData(request)),
-      totalPage: Math.ceil(totalCount / (perPage || 10)),
-      currentPage: page || 1,
+      totalPage: Math.ceil(totalCount / perPage),
+      currentPage: page,
     };
   }
 
