@@ -88,4 +88,26 @@ export class UserService {
 
     return { data: user };
   }
+
+  async getAuthInfo(id: number) {
+    const auth = await this.prisma.users.findUnique({
+      where: {
+        id,
+        authId: { not: null },
+        deletedAt: null,
+      },
+      select: {
+        auth: {
+          select: {
+            email: true,
+            phoneNumber: true,
+            birthDate: true,
+            userName: true,
+          },
+        },
+      },
+    });
+
+    return { data: auth.auth };
+  }
 }
