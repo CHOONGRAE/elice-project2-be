@@ -99,32 +99,18 @@ export class UserSonminsuRequsetsController {
   }
 
   @Patch(':requestId')
-  @UseInterceptors(
-    FileInterceptor('image', {
-      fileFilter: (req, file, cb) => {
-        if (/image/i.test(file.mimetype)) {
-          file.originalname = Buffer.from(file.originalname, 'latin1').toString(
-            'utf-8',
-          );
-          cb(null, true);
-        } else cb(new BadRequestException(), true);
-      },
-    }),
-  )
-  @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: '의뢰 수정',
   })
   async updateSonminsuRequest(
     @User() userId: number,
     @Param('requestId') requestId: number,
-    @UploadedFile() image: Express.Multer.File,
     @Body() updateSonminsuRequestDto: UpdateSonminsuRequestDto,
   ) {
     return await this.sonminsuRequestService.updateSonminsuRequest(
       requestId,
       userId,
-      { ...updateSonminsuRequestDto, image },
+      updateSonminsuRequestDto,
     );
   }
 

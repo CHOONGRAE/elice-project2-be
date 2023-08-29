@@ -2,11 +2,7 @@ import { CreateSonminsuRequestDto } from '@dto/sonminsuRequestDto/create-sonmins
 import { GetSonminsuRequestDto } from '@dto/sonminsuRequestDto/get-sonmisuRequest.dto';
 import { PaginateSonminsuRequestDto } from '@dto/sonminsuRequestDto/paginate-sonminsuRequest.dto';
 import { UpdateSonminsuRequestDto } from '@dto/sonminsuRequestDto/update-sonminsuRequest.dto';
-import {
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { PrismaService } from '@prisma/prisma.service';
@@ -52,8 +48,7 @@ export class SonminsuRequestService {
     userId: number,
     updateSonminsuRequestDto: UpdateSonminsuRequestDto,
   ) {
-    const { title, content, groupName, artistName, image } =
-      updateSonminsuRequestDto;
+    const { title, content } = updateSonminsuRequestDto;
 
     const updatedSonminsuRequest = await this.prisma.sonminsuRequests.update({
       where: {
@@ -64,14 +59,6 @@ export class SonminsuRequestService {
       data: {
         title,
         content,
-        groupName,
-        artistName,
-        images: {
-          deleteMany: {},
-          create: {
-            url: await this.s3.uploadImage(image, `requests/author-${userId}/`),
-          },
-        },
       },
       select: this.detailSelectField,
     });
