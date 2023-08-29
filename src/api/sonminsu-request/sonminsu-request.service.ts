@@ -233,19 +233,20 @@ export class SonminsuRequestService {
     };
   }
 
-  private readonly transFormData = ({ images, bookmarks, ...value }) => ({
+  private readonly transFormData = ({ images, ...value }) => ({
     image: images[0]?.url || null,
-    isBookmark: !!bookmarks?.length,
     ...value,
   });
 
   private readonly transFormDetailData = ({
     images,
     _count,
+    bookmarks,
     answers,
     ...data
   }) => ({
     image: images[0]?.url || null,
+    isBookmark: !!bookmarks?.length,
     ...data,
     answerCnt: _count.answers,
     answers: answers.map(({ user: { _count, ...user }, ...answer }) => ({
