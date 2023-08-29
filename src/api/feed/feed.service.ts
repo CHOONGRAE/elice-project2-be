@@ -51,6 +51,15 @@ export class FeedService {
           },
           select: this.selectField,
         }),
+        this.prisma.sonminsuItems.updateMany({
+          where: {
+            id: { in: sonminsuItems || [] },
+          },
+          data: {
+            groupName,
+            artistName,
+          },
+        }),
         this.prisma.fandomRanks.update({
           where: {
             fandomId,
