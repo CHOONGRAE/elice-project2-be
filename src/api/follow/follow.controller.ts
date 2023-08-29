@@ -11,9 +11,9 @@ import { PaginateFollowDto } from '@dto/followDto/paginate-follow.dto';
 export class FollowController {
   constructor(private readonly followService: FollowService) {}
 
-  @Get('follows/:userId')
+  @Get('following/:userId')
   @ApiOperation({
-    summary: '팔로우 목록',
+    summary: '팔로잉 목록',
   })
   async getFollows(
     @Param('userId') userId: number,
@@ -22,7 +22,7 @@ export class FollowController {
     return await this.followService.getFollows(userId, pagination);
   }
 
-  @Get('followers:userId')
+  @Get('followers/:userId')
   @ApiOperation({
     summary: '팔로워 목록',
   })
