@@ -56,6 +56,20 @@ export class UserSonminsuRequsetsController {
     );
   }
 
+  @Get(':requestId')
+  @ApiOperation({
+    summary: '북마크 정보있는 의뢰 상세',
+  })
+  async getSonminsuRequest(
+    @User() userId: number,
+    @Param('requestId') id: number,
+  ) {
+    return await this.sonminsuRequestService.getSonminsuRequestForUser(
+      userId,
+      id,
+    );
+  }
+
   @Post()
   @UseInterceptors(
     FileInterceptor('image', {

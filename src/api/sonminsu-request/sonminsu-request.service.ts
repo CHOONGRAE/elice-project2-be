@@ -199,7 +199,9 @@ export class SonminsuRequestService {
         id,
         deletedAt: null,
       },
-      select: this.detailSelectField,
+      select: {
+        ...this.detailSelectField,
+      },
     });
 
     return {
@@ -207,8 +209,33 @@ export class SonminsuRequestService {
     };
   }
 
-  private readonly transFormData = ({ images, ...value }) => ({
+  async getSonminsuRequestForUser(userId: number, id: number) {
+    const result = await this.prisma.sonminsuRequests.findUnique({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      select: {
+        bookmarks: {
+          where: {
+            userId: { equals: userId },
+          },
+          select: {
+            userId: true,
+          },
+        },
+        ...this.detailSelectField,
+      },
+    });
+
+    return {
+      data: this.transFormDetailData(result),
+    };
+  }
+
+  private readonly transFormData = ({ images, bookmarks, ...value }) => ({
     image: images[0]?.url || null,
+    isBookmark: !!bookmarks?.length,
     ...value,
   });
 
@@ -281,6 +308,9 @@ export class SonminsuRequestService {
       answers: {
         orderBy: {
           createdAt: 'desc',
+        },
+        where: {
+          deletedAt: null,
         },
         select: {
           id: true,
