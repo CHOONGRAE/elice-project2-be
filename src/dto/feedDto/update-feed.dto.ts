@@ -6,13 +6,11 @@ export class UpdateFeedDto extends OmitType(PartialType(CreateFeedDto), [
   'image',
   'groupName',
   'artistName',
+  'sonminsuItems',
 ] as const) {
-  @ApiProperty()
+  @ApiProperty({ required: false, type: 'string' })
   content: string;
 
   @ApiProperty({ type: 'array', items: { type: 'string' }, required: false })
   hashTags: string[];
-
-  @ApiProperty({ type: 'array', items: { type: 'number' }, required: false })
-  sonminsuItems: number[];
 }

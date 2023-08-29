@@ -1,5 +1,4 @@
 import { HashTagService } from '@api/hash-tag/hash-tag.service';
-import { SonminsuItemService } from '@api/sonminsu-item/sonminsu-item.service';
 import { CreateFeedDto } from '@dto/feedDto/create-feed.dto';
 import { PaginateFeedDto } from '@dto/feedDto/paginate-feed.dto';
 import { UpdateFeedDto } from '@dto/feedDto/update-feed.dto';
@@ -79,7 +78,7 @@ export class FeedService {
     feedId: number,
     updateFeedDto: UpdateFeedDto,
   ) {
-    const { content, hashTags, sonminsuItems } = updateFeedDto;
+    const { content, hashTags } = updateFeedDto;
 
     const { images, tags, _count, ...updatedFeed } = await this.prisma.feeds
       .update({
@@ -93,9 +92,6 @@ export class FeedService {
           tags: {
             deleteMany: {},
             create: await this.createHashTags(hashTags || []),
-          },
-          sonminsuItems: {
-            connect: (sonminsuItems || []).map((id) => ({ id })),
           },
         },
         select: this.selectField,
