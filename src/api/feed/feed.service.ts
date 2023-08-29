@@ -358,6 +358,10 @@ export class FeedService {
     sonminsuItems: {
       select: {
         id: true,
+        originUrl: true,
+        imgUrl: true,
+        title: true,
+        price: true,
       },
     },
     _count: {
