@@ -146,7 +146,7 @@ export class AuthController {
   @Post('init-info')
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(
-    FileInterceptor('image', {
+    FileInterceptor('file', {
       fileFilter: (req, file, cb) => {
         if (/image/i.test(file.mimetype)) {
           file.originalname = Buffer.from(file.originalname, 'latin1').toString(
