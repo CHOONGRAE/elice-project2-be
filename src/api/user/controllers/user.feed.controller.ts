@@ -49,17 +49,6 @@ export class UserFeedController {
     return await this.feedService.getFeedsByUser(userId, pagination);
   }
 
-  @Get('my')
-  @ApiOperation({
-    summary: '내가 작성한 피드 목록',
-  })
-  async getFeedsByUser(
-    @User() userId: number,
-    @Query() pagination: PaginateFeedDto,
-  ) {
-    return await this.feedService.getFeedsByAuthor(userId, pagination);
-  }
-
   @Post()
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(

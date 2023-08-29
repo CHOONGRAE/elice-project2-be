@@ -135,6 +135,9 @@ export class FeedService {
       take: perPage,
       where: {
         deletedAt: null,
+        author: {
+          deletedAt: null,
+        },
       },
       select: this.selectField,
       orderBy: {
@@ -145,6 +148,9 @@ export class FeedService {
     const totalCount = await this.prisma.feeds.count({
       where: {
         deletedAt: null,
+        author: {
+          deletedAt: null,
+        },
       },
     });
 
@@ -214,6 +220,9 @@ export class FeedService {
       where: {
         userId,
         deletedAt: null,
+        author: {
+          deletedAt: null,
+        },
       },
       select: this.selectField,
       orderBy: {
@@ -225,6 +234,9 @@ export class FeedService {
       where: {
         userId,
         deletedAt: null,
+        author: {
+          deletedAt: null,
+        },
       },
     });
 
@@ -249,6 +261,9 @@ export class FeedService {
       where: {
         fandomId,
         deletedAt: null,
+        author: {
+          deletedAt: null,
+        },
       },
       select: this.selectField,
       orderBy: {
@@ -260,6 +275,9 @@ export class FeedService {
       where: {
         fandomId,
         deletedAt: null,
+        author: {
+          deletedAt: null,
+        },
       },
     });
 
@@ -280,6 +298,10 @@ export class FeedService {
       await this.prisma.feeds.findUnique({
         where: {
           id,
+          deletedAt: null,
+          author: {
+            deletedAt: null,
+          },
         },
         select: { ...this.selectField, groupName: true, artistName: true },
       });
