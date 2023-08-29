@@ -4,6 +4,7 @@ import { setupSwagger } from './setups/swagger';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
 import { PrismaService } from './data-access/prisma/prisma.service';
+import { SocketIoAdapter } from './chat/socket-io.adapter';
 
 const validationPipeConifg = {
   whitelist: true,
@@ -39,6 +40,8 @@ async function bootstrap() {
   setupSwagger(app);
 
   app.useGlobalPipes(validationPipe);
+
+  app.useWebSocketAdapter(new SocketIoAdapter(app));
 
   await app.listen(5000);
 }
