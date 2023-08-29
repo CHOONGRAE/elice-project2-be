@@ -52,19 +52,68 @@ export class BucketService {
     const { items, ...result } = await this.prisma.buckets.findUnique({
       where: {
         id,
-        userId,
       },
-      select: this.detailSelectField,
+      select: {
+        id: true,
+        bucketName: true,
+        createdAt: true,
+        items: {
+          select: {
+            item: {
+              select: {
+                id: true,
+                originUrl: true,
+                imgUrl: true,
+                title: true,
+                price: true,
+                groupName: true,
+                artistName: true,
+                feed: {
+                  select: {
+                    groupName: true,
+                    artistName: true,
+                  },
+                },
+                answer: {
+                  select: {
+                    request: {
+                      select: {
+                        groupName: true,
+                        artistName: true,
+                      },
+                    },
+                  },
+                },
+                bucketItems: {
+                  where: {
+                    bucket: {
+                      userId,
+                    },
+                  },
+                  select: {
+                    bucketId: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
     return {
       data: {
         ...result,
-        items: items.map(({ item: { feed, answer, ...item } }) => ({
-          ...item,
-          groupName: feed.groupName || answer.request?.groupName,
-          artistName: feed.groupName || answer.request?.artistName,
-        })),
+        items: items.map(
+          ({ item: { feed, answer, bucketItems, ...item } }) => ({
+            ...item,
+            groupName:
+              item.groupName || feed.groupName || answer.request?.groupName,
+            artistName:
+              item.artistName || feed.artistName || answer.request?.artistName,
+            isInMyBucket: bucketItems[0],
+          }),
+        ),
       },
     };
   }
@@ -97,6 +146,8 @@ export class BucketService {
             imgUrl: true,
             title: true,
             price: true,
+            groupName: true,
+            artistName: true,
             feed: {
               select: {
                 groupName: true,
@@ -111,6 +162,11 @@ export class BucketService {
                     artistName: true,
                   },
                 },
+              },
+            },
+            bucketItem: {
+              include: {
+                userId: true,
               },
             },
           },

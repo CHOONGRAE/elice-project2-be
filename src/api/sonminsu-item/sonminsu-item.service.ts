@@ -124,19 +124,75 @@ export class SonminsuItemService {
   ) {
     const { page, perPage } = pagination;
 
-    const results: Array<
-      Prisma.SonminsuItemsFieldRefs & { isInBucket: number | null }
-    > = await this.prisma.$queryRaw`
-      SELECT I.id, I.origin_url AS "originUrl", I.title, I.price, I.image_url AS "imageUrl", I.group_name AS "groupName", I.artist_name AS "artistName", I.created_at AS "createdAt",
-      CASE WHEN B.user_id IS NOT NULL THEN true ELSE false END AS "isInBucket"
-      FROM public."SonminsuItems" AS I
-      LEFT JOIN public."BucketItems" AS BI ON I.id = BI.item_id
-      LEFT JOIN public."Buckets" AS B ON BI.bucket_id = B.id AND B.user_id = ${userId}
-      LEFT JOIN public."Feeds" AS F ON I.feed_id = F.id
-      WHERE ((I.feed_id IS NOT NULL AND F.deleted_at IS NULL) OR (I.answer_id IS NOT NULL AND I.registration IS true))
-      ORDER BY I.created_at DESC
-      LIMIT ${perPage} OFFSET ${perPage * (page - 1)}
-    `;
+    // const results: Array<
+    //   Prisma.SonminsuItemsFieldRefs & { isInBucket: number | null }
+    // > = await this.prisma.$queryRaw`
+    //   SELECT I.id, I.origin_url AS "originUrl", I.title, I.price, I.image_url AS "imageUrl", I.group_name AS "groupName", I.artist_name AS "artistName", I.created_at AS "createdAt",
+    //   CASE WHEN B.user_id IS NOT NULL THEN true ELSE false END AS "isInBucket"
+    //   FROM public."SonminsuItems" AS I
+    //   LEFT JOIN public."BucketItems" AS BI ON I.id = BI.item_id
+    //   LEFT JOIN public."Buckets" AS B ON BI.bucket_id = B.id AND B.user_id = ${userId}
+    //   LEFT JOIN public."Feeds" AS F ON I.feed_id = F.id
+    //   WHERE ((I.feed_id IS NOT NULL AND F.deleted_at IS NULL) OR (I.answer_id IS NOT NULL AND I.registration IS true))
+    //   ORDER BY I.created_at DESC
+    //   LIMIT ${perPage} OFFSET ${perPage * (page - 1)}
+    // `;
+
+    const results = await this.prisma.sonminsuItems.findMany({
+      where: {
+        OR: [
+          {
+            feedId: { not: null },
+            feed: {
+              deletedAt: null,
+            },
+          },
+          {
+            answerId: { not: null },
+            registration: true,
+          },
+        ],
+      },
+      select: {
+        id: true,
+        originUrl: true,
+        imgUrl: true,
+        title: true,
+        price: true,
+        groupName: true,
+        artistName: true,
+        createdAt: true,
+        feed: {
+          select: {
+            groupName: true,
+            artistName: true,
+          },
+        },
+        answer: {
+          select: {
+            request: {
+              select: {
+                groupName: true,
+                artistName: true,
+              },
+            },
+          },
+        },
+        bucketItems: {
+          where: {
+            bucket: {
+              userId,
+            },
+          },
+          select: {
+            bucketId: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
 
     const totalCount = await this.prisma.sonminsuItems.count({
       where: {
@@ -156,9 +212,13 @@ export class SonminsuItemService {
     });
 
     return {
-      data: results.map(({ isInBucket, ...result }) => ({
-        isInBucket,
+      // data: results.map(({ isInBucket, ...result }) => ({
+      //   isInBucket,
+      //   ...result,
+      // })),
+      data: results.map(({ bucketItems, ...result }) => ({
         ...result,
+        isInMyBucket: bucketItems[0],
       })),
       totalPage: Math.ceil(totalCount / perPage),
       currentPage: page,
