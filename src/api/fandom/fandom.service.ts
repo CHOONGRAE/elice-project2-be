@@ -245,21 +245,29 @@ export class FandomService {
     const { page, perPage } = paginateFandomDto;
 
     const [result, totalCount] = await this.prisma.$transaction([
-      this.prisma.fandoms.findMany({
-        where: {
-          deletedAt: null,
-        },
-        select: this.selectField,
+      this.prisma.fandomRanks.findMany({
         skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
         take: Math.max(0, perPage || 10),
+        where: {
+          fandom: {
+            deletedAt: null,
+          },
+        },
         orderBy: [
           {
-            rank: {
-              point: 'desc',
+            point: 'desc',
+          },
+          {
+            fandom: {
+              createdAt: 'desc',
             },
           },
-          { createdAt: 'asc' },
         ],
+        select: {
+          fandom: {
+            select: this.selectField,
+          },
+        },
       }),
       this.prisma.fandoms.count({
         where: {
@@ -272,11 +280,13 @@ export class FandomService {
       data: result.map(
         (
           {
-            id,
-            fandomName,
-            image,
-            _count: { subscribes: memberLength },
-            messages,
+            fandom: {
+              id,
+              fandomName,
+              image,
+              _count: { subscribes: memberLength },
+              messages,
+            },
           },
           i,
         ) => ({
