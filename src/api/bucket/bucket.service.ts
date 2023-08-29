@@ -49,7 +49,7 @@ export class BucketService {
 
   //플래튼 처리 해야함
   async getBucket(id: number, userId: number) {
-    const result = await this.prisma.buckets.findUnique({
+    const { items, ...result } = await this.prisma.buckets.findUnique({
       where: {
         id,
         userId,
@@ -57,7 +57,16 @@ export class BucketService {
       select: this.detailSelectField,
     });
 
-    return { data: result };
+    return {
+      data: {
+        ...result,
+        items: items.map(({ item: { feed, answer, ...item } }) => ({
+          ...item,
+          groupName: feed.groupName || answer.request?.groupName,
+          artistName: feed.groupName || answer.request?.artistName,
+        })),
+      },
+    };
   }
 
   private readonly selectField = {
@@ -83,6 +92,7 @@ export class BucketService {
       select: {
         item: {
           select: {
+            id: true,
             originUrl: true,
             imgUrl: true,
             title: true,
