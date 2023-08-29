@@ -314,6 +314,7 @@ export class SonminsuRequestService {
         },
         select: {
           id: true,
+          isChoosed: true,
           user: {
             select: {
               id: true,
