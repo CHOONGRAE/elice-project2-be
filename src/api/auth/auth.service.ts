@@ -14,7 +14,6 @@ import { MailerService } from 'src/mailer/mailer.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { InitAuthDto } from '@dto/authDto/init-auth.dto';
-import { Prisma } from '@prisma/client';
 import { S3Service } from 'src/s3/s3.service';
 
 const ALPHABET = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
@@ -67,16 +66,23 @@ export class AuthService {
     if (!isVerificated) {
       throw new ConflictException();
     }
-
-    await this.redis.delete(email);
   }
 
   async signup(createAuthDto: CreateAuthDto) {
-    const hashedPassword = await bcrypt.hash(createAuthDto.password, 10);
+    const { code, email, password, userName, phoneNumber, birthDate } =
+      createAuthDto;
+    await this.confirmVerificationCode({ code, email });
+
+    await this.redis.delete(email);
+
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     await this.prisma.auth.create({
       data: {
-        ...createAuthDto,
+        email,
+        userName,
+        phoneNumber,
+        birthDate,
         password: hashedPassword,
       },
     });

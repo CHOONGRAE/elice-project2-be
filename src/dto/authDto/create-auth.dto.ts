@@ -14,30 +14,35 @@ export class CreateAuthDto extends IntersectionType(
 ) {
   @IsNotEmpty()
   @IsString()
-  @IsEmail()
   @ApiProperty()
+  code: string;
+
+  @IsNotEmpty()
+  @IsString()
+  @IsEmail()
+  @ApiProperty({ required: true })
   email: string;
 
   @IsNotEmpty()
   @IsString()
   @Length(8)
-  @ApiProperty()
+  @ApiProperty({ required: true })
   password: string;
 
   @IsNotEmpty()
   @IsString()
-  @ApiProperty()
+  @ApiProperty({ required: true })
   userName: string;
 
   @IsNotEmpty()
   @IsNumberString()
   @Length(8, 8)
-  @ApiProperty()
+  @ApiProperty({ required: true })
   birthDate: string;
 
   @IsNotEmpty()
   @IsNumberString()
   @Length(10, 11)
-  @ApiProperty()
+  @ApiProperty({ required: true })
   phoneNumber: string;
 }
