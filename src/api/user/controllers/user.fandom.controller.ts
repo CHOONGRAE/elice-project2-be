@@ -53,7 +53,7 @@ export class UserFandomController {
 
   @Post()
   @UseInterceptors(
-    FileInterceptor('image', {
+    FileInterceptor('file', {
       fileFilter: (req, file, cb) => {
         if (/image/i.test(file.mimetype)) {
           file.originalname = Buffer.from(file.originalname, 'latin1').toString(

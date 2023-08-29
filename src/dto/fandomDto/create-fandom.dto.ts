@@ -1,13 +1,8 @@
 import { FandomEntity } from '@entities';
-import { ApiHideProperty, ApiProperty, PartialType } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { IsString } from 'class-validator';
 
 export class CreateFandomDto extends PartialType(FandomEntity) {
-  @IsOptional()
-  @IsNumber()
-  @ApiHideProperty()
-  userId: number;
-
   @IsString()
   @ApiProperty()
   fandomName: string;
