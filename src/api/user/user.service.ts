@@ -3,6 +3,8 @@ import { UpdateUserDto } from '@dto/userDto/update-user.dto';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 import { S3Service } from 'src/s3/s3.service';
+import * as bcrypt from 'bcrypt';
+import { UpdatePasswordDto } from '@dto/authDto/update-password.dto';
 
 @Injectable()
 export class UserService {
@@ -135,5 +137,50 @@ export class UserService {
     });
 
     return { data: auth.auth };
+  }
+
+  async checkPassword(id: number, updatePasswordDto: UpdatePasswordDto) {
+    const auth = await this.prisma.users.findUnique({
+      where: {
+        id,
+        authId: { not: null },
+        deletedAt: null,
+      },
+      select: {
+        auth: {
+          select: {
+            password: true,
+          },
+        },
+      },
+    });
+
+    const check = await bcrypt.compare(
+      updatePasswordDto.password,
+      auth.auth.password,
+    );
+
+    return { data: check };
+  }
+
+  async updatePassword(id: number, updatePasswordDto: UpdatePasswordDto) {
+    const { password } = updatePasswordDto;
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await this.prisma.users.update({
+      where: {
+        id,
+        authId: { not: null },
+        deletedAt: null,
+      },
+      data: {
+        auth: {
+          update: {
+            password: hashedPassword,
+          },
+        },
+      },
+    });
   }
 }

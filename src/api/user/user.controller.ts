@@ -23,6 +23,7 @@ import { User } from '@decorator/User.decorator';
 import { UpdateUserDto } from '@dto/userDto/update-user.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UpdateAuthDto } from '@dto/authDto/update-auth.dto';
+import { UpdatePasswordDto } from '@dto/authDto/update-password.dto';
 
 @Controller({
   path: '/',
@@ -106,7 +107,12 @@ export class UserController {
   @ApiOperation({
     summary: '비밀 번호 확인',
   })
-  async checkPassword() {}
+  async checkPassword(
+    @User() id: number,
+    @Body() updatePasswordDto: UpdatePasswordDto,
+  ) {
+    return await this.userService.checkPassword(id, updatePasswordDto);
+  }
 
   @Put('users/password')
   @UseGuards(AuthGuard)
@@ -114,5 +120,10 @@ export class UserController {
   @ApiOperation({
     summary: '비밀 번호 변경',
   })
-  async updatePassword() {}
+  async updatePassword(
+    @User() id: number,
+    @Body() updatePasswordDto: UpdatePasswordDto,
+  ) {
+    return await this.userService.updatePassword(id, updatePasswordDto);
+  }
 }
