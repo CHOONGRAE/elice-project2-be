@@ -9,8 +9,8 @@ import { FollowService } from '@api/follow/follow.service';
   version: '1',
 })
 @ApiTags('Users API')
-@UseGuards(AuthGuard)
-@ApiBearerAuth('Authorization')
+// @UseGuards(AuthGuard)
+// @ApiBearerAuth('Authorization')
 export class UserController {
   constructor(
     private readonly userService: UserService,
@@ -21,5 +21,7 @@ export class UserController {
   @ApiOperation({
     summary: '피드 팔로우 팔로워 수',
   })
-  async getFesFosFos(@Param('userId') userId: number) {}
+  async getFesFosFos(@Param('userId') userId: number) {
+    return await this.userService.getFesFosFos(userId);
+  }
 }

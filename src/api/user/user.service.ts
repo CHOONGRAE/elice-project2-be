@@ -1,13 +1,45 @@
-import { FeedService } from '@api/feed/feed.service';
-import { FollowService } from '@api/follow/follow.service';
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from '@prisma/prisma.service';
 
 @Injectable()
 export class UserService {
-  constructor(
-    private readonly feed: FeedService,
-    private readonly follow: FollowService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async getFesFosFos(userId) {}
+  async getFesFosFos(userId) {
+    const feeds = await this.prisma.feeds.count({
+      where: {
+        userId,
+        deletedAt: null,
+        author: {
+          deletedAt: null,
+        },
+      },
+    });
+
+    const follows = await this.prisma.follows.count({
+      where: {
+        userId,
+        follow: {
+          deletedAt: null,
+        },
+        follower: {
+          deletedAt: null,
+        },
+      },
+    });
+
+    const followers = await this.prisma.follows.count({
+      where: {
+        followId: userId,
+        follow: {
+          deletedAt: null,
+        },
+        follower: {
+          deletedAt: null,
+        },
+      },
+    });
+
+    return { data: { feeds, follows, followers } };
+  }
 }
