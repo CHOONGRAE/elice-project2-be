@@ -240,9 +240,8 @@ CREATE TABLE "ReadedMessages" (
     "user_id" INTEGER NOT NULL,
     "fandom_id" INTEGER NOT NULL,
     "message_id" INTEGER NOT NULL DEFAULT 0,
-    "in_room_message_id" INTEGER NOT NULL DEFAULT 0,
 
-    CONSTRAINT "ReadedMessages_pkey" PRIMARY KEY ("user_id")
+    CONSTRAINT "ReadedMessages_pkey" PRIMARY KEY ("user_id","fandom_id")
 );
 
 -- CreateIndex
