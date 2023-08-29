@@ -1,9 +1,14 @@
+import { UpdateUserDto } from '@dto/userDto/update-user.dto';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
+import { S3Service } from 'src/s3/s3.service';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly s3: S3Service,
+  ) {}
 
   async getFesFosFos(userId) {
     const feeds = await this.prisma.feeds.count({
@@ -48,6 +53,30 @@ export class UserService {
       where: {
         id,
         deletedAt: null,
+      },
+      select: {
+        id: true,
+        nickName: true,
+        introduction: true,
+        image: true,
+      },
+    });
+
+    return { data: user };
+  }
+
+  async updateProfile(id: number, updateUserDto: UpdateUserDto) {
+    const { nickName, introduction, file } = updateUserDto;
+
+    const user = await this.prisma.users.update({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      data: {
+        nickName,
+        introduction,
+        image: file && (await this.s3.uploadImage(file, `users/${id}/`)),
       },
       select: {
         id: true,

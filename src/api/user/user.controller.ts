@@ -1,16 +1,27 @@
 import { AuthGuard } from '@guards/auth.guard';
 import {
+  BadRequestException,
+  Body,
   Controller,
   Get,
   Param,
   Patch,
   Post,
   Put,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { User } from '@decorator/User.decorator';
+import { UpdateUserDto } from '@dto/userDto/update-user.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller({
   path: '/',
@@ -41,10 +52,29 @@ export class UserController {
   @Patch('users/profile')
   @UseGuards(AuthGuard)
   @ApiBearerAuth('Authorization')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      fileFilter: (req, file, cb) => {
+        if (/image/i.test(file.mimetype)) {
+          file.originalname = Buffer.from(file.originalname, 'latin1').toString(
+            'utf-8',
+          );
+          cb(null, true);
+        } else cb(new BadRequestException(), true);
+      },
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: '프로필 정보 수정',
   })
-  async updateProfile() {}
+  async updateProfile(
+    @Body() updateUserDto: UpdateUserDto,
+    @UploadedFile() file: Express.Multer.File,
+    @User() id: number,
+  ) {
+    return this.userService.updateProfile(id, { file, ...updateUserDto });
+  }
 
   @Get('users/authInfo')
   @UseGuards(AuthGuard)
