@@ -61,6 +61,7 @@ export class SonminsuAnswerService {
           id,
           userId,
           deletedAt: null,
+          isChoosed: null,
         },
         data: {
           deletedAt: new Date().toISOString(),
@@ -96,6 +97,11 @@ export class SonminsuAnswerService {
               data: {
                 registration: true,
               },
+            },
+          },
+          request: {
+            update: {
+              isDone: true,
             },
           },
         },
