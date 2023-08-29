@@ -288,10 +288,10 @@ model MessageFiles {
 }
 
 model ReadedMessages {
-  userId Int @id @map("user_id")
+  userId Int @map("user_id")
   fandomId Int @map("fandom_id")
   messageId Int @default(0) @map("message_id")
-  inRoomMessageId Int @default(0) @map("in_room_message_id")
 
   user Users @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([userId,fandomId])
 }
