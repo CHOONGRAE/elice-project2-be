@@ -167,12 +167,38 @@ export class AuthService {
               nickName: nickName || name,
               introduction,
               image: file && (await this.s3.uploadImage(file, `users/${id}/`)),
+              buckets: {
+                create: {
+                  bucketName: '나의 버킷 리스트',
+                },
+              },
+            },
+          },
+        },
+        include: {
+          users: {
+            where: {
+              deletedAt: null,
             },
           },
         },
       });
 
-      return await this.createTokens(result.id, email);
+      const {
+        users: [{ id: userId, nickName: nick, introduction: introduce, image }],
+      } = result;
+
+      const token = await this.createTokens(userId, email);
+
+      return {
+        data: {
+          userId,
+          nickName: nick,
+          introduction: introduce,
+          image,
+        },
+        token,
+      };
     } catch (e) {
       throw new UnauthorizedException();
     }
@@ -182,12 +208,7 @@ export class AuthService {
     const trimedRt = rt.replace(/bearer/i, '').trim();
 
     try {
-      const {
-        sub,
-        email,
-        key,
-        exp,
-      }: { sub: number; email: string; key: string; exp: number } =
+      const { key, exp }: { key: string; exp: number } =
         await this.jwt.verifyAsync(trimedRt);
 
       const checker = (await this.redis.get(key)) as string;
