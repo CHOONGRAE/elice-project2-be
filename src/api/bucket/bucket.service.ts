@@ -49,15 +49,73 @@ export class BucketService {
 
   //플래튼 처리 해야함
   async getBucket(id: number, userId: number) {
-    const result = await this.prisma.buckets.findUnique({
+    const { items, ...result } = await this.prisma.buckets.findUnique({
       where: {
         id,
-        userId,
       },
-      select: this.detailSelectField,
+      select: {
+        id: true,
+        bucketName: true,
+        createdAt: true,
+        items: {
+          select: {
+            item: {
+              select: {
+                id: true,
+                originUrl: true,
+                imgUrl: true,
+                title: true,
+                price: true,
+                groupName: true,
+                artistName: true,
+                feed: {
+                  select: {
+                    groupName: true,
+                    artistName: true,
+                  },
+                },
+                answer: {
+                  select: {
+                    request: {
+                      select: {
+                        groupName: true,
+                        artistName: true,
+                      },
+                    },
+                  },
+                },
+                bucketItems: {
+                  where: {
+                    bucket: {
+                      userId,
+                    },
+                  },
+                  select: {
+                    bucketId: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
-    return { data: result };
+    return {
+      data: {
+        ...result,
+        items: items.map(
+          ({ item: { feed, answer, bucketItems, ...item } }) => ({
+            ...item,
+            groupName:
+              item.groupName || feed.groupName || answer.request?.groupName,
+            artistName:
+              item.artistName || feed.artistName || answer.request?.artistName,
+            isInMyBucket: bucketItems[0],
+          }),
+        ),
+      },
+    };
   }
 
   private readonly selectField = {
@@ -83,10 +141,13 @@ export class BucketService {
       select: {
         item: {
           select: {
+            id: true,
             originUrl: true,
             imgUrl: true,
             title: true,
             price: true,
+            groupName: true,
+            artistName: true,
             feed: {
               select: {
                 groupName: true,
@@ -101,6 +162,11 @@ export class BucketService {
                     artistName: true,
                   },
                 },
+              },
+            },
+            bucketItem: {
+              include: {
+                userId: true,
               },
             },
           },

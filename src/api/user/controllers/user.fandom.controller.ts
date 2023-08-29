@@ -51,6 +51,14 @@ export class UserFandomController {
     return await this.fandomService.getFandomsByUser(id, paginateFandomDto);
   }
 
+  @Get(':fandomId')
+  @ApiOperation({
+    summary: '가입여부, 어드민 여부 포함 상세페이지',
+  })
+  async getFandomById(@User() userId: number, @Param('fandomId') id: number) {
+    return await this.fandomService.getFandomByIdForUser(id, userId);
+  }
+
   @Post()
   @UseInterceptors(
     FileInterceptor('file', {

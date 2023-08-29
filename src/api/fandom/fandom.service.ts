@@ -223,7 +223,7 @@ export class FandomService {
           id: fandomId,
           deletedAt: null,
         },
-        select: this.selectField,
+        select: { ...this.selectField },
       });
 
       return {
@@ -231,6 +231,51 @@ export class FandomService {
           id,
           fandomName,
           image,
+          memberLength,
+          lastChatTime: messages[0]?.createdAt || null,
+        },
+      };
+    } catch (e) {
+      throw new BadRequestException();
+    }
+  }
+
+  async getFandomByIdForUser(fandomId: number, userId: number) {
+    try {
+      const {
+        _count: { subscribes: memberLength },
+        messages,
+        admin,
+        subscribes,
+        ...result
+      } = await this.prisma.fandoms.findUnique({
+        where: {
+          id: fandomId,
+          deletedAt: null,
+        },
+        select: {
+          ...this.selectField,
+          admin: {
+            where: {
+              id: userId,
+            },
+            select: {
+              id: true,
+            },
+          },
+          subscribes: {
+            where: {
+              userId,
+            },
+          },
+        },
+      });
+
+      return {
+        data: {
+          ...result,
+          isAdmin: !!admin,
+          isSubscribe: !!subscribes[0],
           memberLength,
           lastChatTime: messages[0]?.createdAt || null,
         },

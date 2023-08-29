@@ -249,6 +249,22 @@ export class FollowService {
     };
   }
 
+  async getIsFollowing(userId, followId) {
+    const check = await this.prisma.follows.findUnique({
+      where: {
+        userId_followId: { userId, followId },
+        follow: {
+          deletedAt: null,
+        },
+        follower: {
+          deletedAt: null,
+        },
+      },
+    });
+
+    return { data: !!check };
+  }
+
   async changeFollowStatus(followDto: FollowDto) {
     const check = await this.prisma.follows.findUnique({
       where: {

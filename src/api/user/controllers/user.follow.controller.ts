@@ -15,9 +15,9 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 export class UserFollowController {
   constructor(private readonly followService: FollowService) {}
 
-  @Get('follows/:userId')
+  @Get('following/:userId')
   @ApiOperation({
-    summary: '팔로우 목록',
+    summary: '팔로잉 목록',
   })
   async getFollows(
     @User() id: number,
@@ -39,9 +39,20 @@ export class UserFollowController {
     return await this.followService.getFollowersByUser(id, userId, pagination);
   }
 
-  @Put('follows/:followId')
+  @Get('isFollowing/:userId')
   @ApiOperation({
-    summary: '팔로우 상태 변경',
+    summary: '내가 저사람 팔로잉 했어?',
+  })
+  async getIsFollowing(
+    @User() userId: number,
+    @Param('userId') followId: number,
+  ) {
+    return await this.followService.getIsFollowing(userId, followId);
+  }
+
+  @Put('following/:followId')
+  @ApiOperation({
+    summary: '팔로잉 상태 변경',
   })
   async toggleFollow(
     @User() userId: number,

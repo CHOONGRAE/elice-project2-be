@@ -49,6 +49,14 @@ export class UserFeedController {
     return await this.feedService.getFeedsByUser(userId, pagination);
   }
 
+  @Get(':feedId')
+  @ApiOperation({
+    summary: '피드 상세, 좋아요표시',
+  })
+  async getFeedById(@Param('feedId') id: number, @User() userId: number) {
+    return await this.feedService.getFeedByIdForUser(id, userId);
+  }
+
   @Post()
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(
