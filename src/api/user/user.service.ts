@@ -42,4 +42,21 @@ export class UserService {
 
     return { data: { feeds, follows, followers } };
   }
+
+  async getProfile(id: number) {
+    const user = await this.prisma.users.findUnique({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        nickName: true,
+        introduction: true,
+        image: true,
+      },
+    });
+
+    return { data: user };
+  }
 }
