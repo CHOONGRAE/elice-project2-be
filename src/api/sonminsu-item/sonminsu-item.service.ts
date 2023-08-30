@@ -330,6 +330,39 @@ export class SonminsuItemService {
     return { data: this.transformData(item) };
   }
 
+  async getSonminsuItemByIdForUser(id: number, userId: number) {
+    const { feed, answer, bucketItems, ...result } =
+      await this.prisma.sonminsuItems.findUnique({
+        where: {
+          id,
+        },
+        select: {
+          ...this.selectField,
+          bucketItems: {
+            where: {
+              bucket: {
+                userId,
+              },
+            },
+            select: {
+              bucketId: true,
+            },
+          },
+        },
+      });
+
+    return {
+      data: {
+        ...result,
+        groupName:
+          result.groupName || feed?.groupName || answer?.request?.groupName,
+        artistName:
+          result.artistName || feed?.artistName || answer?.request?.artistName,
+        isInMyBucket: bucketItems[0],
+      },
+    };
+  }
+
   private readonly transformData = ({ feed, answer, ...data }) => ({
     ...data,
     groupName: data.groupName || feed?.groupName || answer?.request?.groupName,

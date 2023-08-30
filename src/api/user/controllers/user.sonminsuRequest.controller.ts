@@ -56,6 +56,20 @@ export class UserSonminsuRequsetsController {
     );
   }
 
+  @Get('bookmarks')
+  @ApiOperation({
+    summary: '본인이 찜한 의뢰 목록',
+  })
+  async getSonminsuRequestBookmarks(
+    @User() userId: number,
+    @Query() paginateSonminsuRequestDto: PaginateSonminsuRequestDto,
+  ) {
+    return await this.sonminsuRequestService.getSonminsuRequestsByBookmark(
+      userId,
+      paginateSonminsuRequestDto,
+    );
+  }
+
   @Get(':requestId')
   @ApiOperation({
     summary: '북마크 정보있는 의뢰 상세',
@@ -96,20 +110,6 @@ export class UserSonminsuRequsetsController {
       ...createSonminsuRequestDto,
       image,
     });
-  }
-
-  @Get('bookmarks')
-  @ApiOperation({
-    summary: '본인이 찜한 의뢰 목록',
-  })
-  async getSonminsuRequestBookmarks(
-    @User() userId: number,
-    @Query() paginateSonminsuRequestDto: PaginateSonminsuRequestDto,
-  ) {
-    return await this.sonminsuRequestService.getSonminsuRequestsByBookmark(
-      userId,
-      paginateSonminsuRequestDto,
-    );
   }
 
   @Patch(':requestId')
