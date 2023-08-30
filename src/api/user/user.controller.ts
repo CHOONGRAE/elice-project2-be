@@ -19,6 +19,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { UserService } from './user.service';
+import { BucketService } from '@api/bucket/bucket.service';
 import { User } from '@decorator/User.decorator';
 import { UpdateUserDto } from '@dto/userDto/update-user.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -31,7 +32,10 @@ import { UpdatePasswordDto } from '@dto/authDto/update-password.dto';
 })
 @ApiTags('Users API')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly bucketService: BucketService,
+  ) {}
 
   @Get('fesfosfos/:userId')
   @ApiOperation({
@@ -125,5 +129,21 @@ export class UserController {
     @Body() updatePasswordDto: UpdatePasswordDto,
   ) {
     return await this.userService.updatePassword(id, updatePasswordDto);
+  }
+
+  @Get('users/profile/:userId')
+  @ApiOperation({
+    summary: '남 프로필 정보 가져오기',
+  })
+  async getPofileByUser(@Param('userId') userId: number) {
+    return await this.userService.getProfile(userId);
+  }
+
+  @Get('buckets/:userId')
+  @ApiOperation({
+    summary: '남 버킷 목록 가져오기',
+  })
+  async getBucketsByUser(@Param('userId') userId: number) {
+    return await this.bucketService.getBuckets(userId);
   }
 }
