@@ -170,11 +170,6 @@ export class SonminsuRequestService {
           select: this.listSelectField,
         },
       },
-      orderBy: {
-        request: {
-          createdAt: 'desc',
-        },
-      },
     });
 
     const totalCount = await this.prisma.sonminsuRequestBookmarks.count({
