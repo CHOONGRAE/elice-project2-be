@@ -71,6 +71,7 @@ model Fandoms {
   subscribes Subscribes[]
   feeds Feeds[]
   messages Messages[]
+  readedMessages ReadedMessages[]
 }
 
 model FandomRanks {
@@ -291,7 +292,9 @@ model ReadedMessages {
   userId Int @map("user_id")
   fandomId Int @map("fandom_id")
   messageId Int @default(0) @map("message_id")
+  uponJoiningMessageId Int @default(0) @map("upon_joining_message_id")
 
   user Users @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fandom Fandoms @relation(fields: [fandomId], references: [id], onDelete: Cascade)
   @@id([userId,fandomId])
 }

@@ -240,6 +240,7 @@ CREATE TABLE "ReadedMessages" (
     "user_id" INTEGER NOT NULL,
     "fandom_id" INTEGER NOT NULL,
     "message_id" INTEGER NOT NULL DEFAULT 0,
+    "upon_joining_message_id" INTEGER NOT NULL DEFAULT 0,
 
     CONSTRAINT "ReadedMessages_pkey" PRIMARY KEY ("user_id","fandom_id")
 );
@@ -351,3 +352,6 @@ ALTER TABLE "MessageFiles" ADD CONSTRAINT "MessageFiles_message_id_fkey" FOREIGN
 
 -- AddForeignKey
 ALTER TABLE "ReadedMessages" ADD CONSTRAINT "ReadedMessages_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ReadedMessages" ADD CONSTRAINT "ReadedMessages_fandom_id_fkey" FOREIGN KEY ("fandom_id") REFERENCES "Fandoms"("id") ON DELETE CASCADE ON UPDATE CASCADE;
