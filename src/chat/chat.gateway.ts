@@ -16,10 +16,10 @@ import { UserService } from './user.service';
 import { MessageService } from './message.service';
 
 @WebSocketGateway(5050, {
-  // cors: { origin: 'http://localhost:3000' },
+  cors: { origin: 'http://localhost:3000' },
   // namespace: /\/thief-.+/,
   namespace: 'thief-sonminsu',
-  cors: true,
+  // cors: true,
 })
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
