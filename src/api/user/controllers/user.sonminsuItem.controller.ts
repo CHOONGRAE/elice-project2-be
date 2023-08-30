@@ -49,6 +49,17 @@ export class UserSonminsuItemController {
     );
   }
 
+  @Get(':itemId')
+  @ApiOperation({
+    summary: '손민수 아이템 상세 (버킷 정보o)',
+  })
+  async getItemById(@User() userId: number, @Param('itemId') itemId: number) {
+    return await this.sonminsuItemService.getSonminsuItemByIdForUser(
+      itemId,
+      userId,
+    );
+  }
+
   @Put(':itemId/buckets/:bucketId')
   @ApiOperation({
     summary: '버킷에 아이템 담기',
