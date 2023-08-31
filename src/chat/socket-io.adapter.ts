@@ -16,7 +16,19 @@ export class SocketIoAdapter extends IoAdapter {
 
     const optionsWithCORS: ServerOptions = {
       ...options,
-      cors: 'localhost:3000',
+      cors: {
+        origin: 'http://localhost:3000',
+        methods: ['GET', 'POST'],
+        credentials: true,
+        exposedHeaders: ['Authorization'],
+        allowedHeaders: [
+          'Origin',
+          'X-Request-With',
+          'Content-Type',
+          'Accept',
+          'Authorization',
+        ],
+      },
     };
 
     const server: Server = super.createIOServer(port, optionsWithCORS);

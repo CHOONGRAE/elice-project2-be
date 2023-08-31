@@ -16,7 +16,19 @@ import { UserService } from './user.service';
 import { MessageService } from './message.service';
 
 @WebSocketGateway(5050, {
-  cors: { origin: 'localhost:3000' },
+  cors: {
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+    credentials: true,
+    exposedHeaders: ['Authorization'],
+    allowedHeaders: [
+      'Origin',
+      'X-Request-With',
+      'Content-Type',
+      'Accept',
+      'Authorization',
+    ],
+  },
   // namespace: /\/thief-.+/,
   namespace: 'thief-sonminsu',
   // cors: true,
