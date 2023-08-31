@@ -32,6 +32,10 @@ export class UserService {
     }));
   }
 
+  async checkJail(userId: number, fandomId: number) {
+    return await this.redis.get(`room-${fandomId}-${userId}`);
+  }
+
   async getMembers(fandomId: number, userId: number, search = '') {
     const isAdmin = await this.prisma.fandoms.findUnique({
       where: {
@@ -69,7 +73,7 @@ export class UserService {
 
     if (isAdmin) {
       for (let i = 0, len = users.length; i < len; i++) {
-        const isJail = await this.redis.get(`room-${fandomId}-${users[i].id}`);
+        const isJail = await this.checkJail(users[i].id, fandomId);
         users[i] = { ...users[i], isJail: !!isJail };
       }
     }
@@ -77,7 +81,7 @@ export class UserService {
     return users;
   }
 
-  async userToJail(fandomId: number, userId: number, admin: number) {
+  async userToggleJail(fandomId: number, userId: number, admin: number) {
     const isAdmin = await this.prisma.fandoms.findUnique({
       where: {
         id: fandomId,
@@ -86,7 +90,9 @@ export class UserService {
     });
 
     if (isAdmin) {
-      await this.redis.set(`room-${fandomId}-${userId}`, 'jail', 0);
+      const check = await this.checkJail(userId, fandomId);
+      if (check) await this.redis.delete(`room-${fandomId}-${userId}`);
+      else await this.redis.set(`room-${fandomId}-${userId}`, 'jail', 0);
     }
 
     return true;
