@@ -275,6 +275,8 @@ export class FeedService {
   async getFeedsByFandom(fandomId: number, pagination: PaginateFeedDto) {
     const { page, perPage } = pagination;
 
+    console.log(fandomId);
+
     const results = await this.prisma.feeds.findMany({
       skip: perPage * (page - 1),
       take: perPage,

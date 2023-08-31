@@ -40,6 +40,6 @@ export class FeedController {
     @Param('fandomId') fandomId: number,
     @Query() pagination: PaginateFeedDto,
   ) {
-    return await this.feedService.getFeedsByAuthor(fandomId, pagination);
+    return await this.feedService.getFeedsByFandom(fandomId, pagination);
   }
 }
