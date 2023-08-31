@@ -27,6 +27,7 @@ export class MessageService {
         createdAt: true,
         author: {
           select: {
+            id: true,
             nickName: true,
             image: true,
           },
@@ -88,6 +89,7 @@ export class MessageService {
         createdAt: true,
         author: {
           select: {
+            id: true,
             nickName: true,
             image: true,
           },
