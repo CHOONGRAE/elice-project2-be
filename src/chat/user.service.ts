@@ -86,7 +86,7 @@ export class UserService {
     });
 
     if (isAdmin) {
-      await this.redis.set(`room-${fandomId}-${userId}`, '', 0);
+      await this.redis.set(`room-${fandomId}-${userId}`, 'jail', 0);
     }
 
     return true;
