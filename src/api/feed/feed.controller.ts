@@ -31,4 +31,15 @@ export class FeedController {
   ) {
     return await this.feedService.getFeedsByAuthor(userId, pagination);
   }
+
+  @Get('fandoms/:fandomId')
+  @ApiOperation({
+    summary: '팬덤 피드 목록',
+  })
+  async getFeedsByFandom(
+    @Param('fandomId') fandomId: number,
+    @Query() pagination: PaginateFeedDto,
+  ) {
+    return await this.feedService.getFeedsByAuthor(fandomId, pagination);
+  }
 }
