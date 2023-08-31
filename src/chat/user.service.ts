@@ -50,7 +50,7 @@ export class UserService {
       image: string;
       isJail?: boolean;
       isAdmin?: boolean;
-      subscribes?: { userId: number };
+      subscribes?: { userId: number }[];
     }[] = await this.prisma.users.findMany({
       where: {
         deletedAt: null,
@@ -88,7 +88,7 @@ export class UserService {
 
     return users.map(({ subscribes, ...user }) => ({
       ...user,
-      isAdmin: subscribes.userId === userId,
+      isAdmin: subscribes[0].userId === userId,
     }));
   }
 
