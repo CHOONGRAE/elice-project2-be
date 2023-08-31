@@ -122,7 +122,9 @@ export class UserService {
         deletedAt: null,
       },
       data: {
-        ...updateAuthDto,
+        auth: {
+          update: updateAuthDto,
+        },
       },
       select: {
         auth: {
