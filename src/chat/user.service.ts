@@ -49,6 +49,8 @@ export class UserService {
       nickName: string;
       image: string;
       isJail?: boolean;
+      isAdmin?: boolean;
+      subscribes?: { userId: number };
     }[] = await this.prisma.users.findMany({
       where: {
         deletedAt: null,
@@ -68,6 +70,12 @@ export class UserService {
         id: true,
         nickName: true,
         image: true,
+        subscribes: {
+          where: {
+            fandomId,
+          },
+          select: { userId: true },
+        },
       },
     });
 
@@ -78,7 +86,10 @@ export class UserService {
       }
     }
 
-    return users;
+    return users.map(({ subscribes, ...user }) => ({
+      ...user,
+      isAdmin: subscribes.userId === userId,
+    }));
   }
 
   async userToggleJail(fandomId: number, userId: number, admin: number) {
