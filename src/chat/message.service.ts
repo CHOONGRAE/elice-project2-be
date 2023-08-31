@@ -16,7 +16,7 @@ export class MessageService {
       userId,
     );
 
-    const messages = this.prisma.messages.findMany({
+    const messages = await this.prisma.messages.findMany({
       where: {
         AND: [
           { fandomId: room },
@@ -37,10 +37,18 @@ export class MessageService {
             image: true,
           },
         },
+        files: {
+          select: {
+            url: true,
+          },
+        },
       },
     });
 
-    return messages;
+    return messages.map(({ files: urls, ...message }) => ({
+      ...message,
+      images: urls.map(({ url }) => url),
+    }));
   }
 
   async getReadedMessage(room: number, userId: number) {
