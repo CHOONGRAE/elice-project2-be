@@ -159,8 +159,6 @@ export class ChatGateway
       message.search,
     );
 
-    console.log(members);
-
     this.server.to(client.id).emit('members', members);
   }
 
@@ -174,5 +172,12 @@ export class ChatGateway
       message.userId,
       client.userId,
     );
+
+    const members = await this.userService.getMembers(
+      message.room,
+      client.userId,
+    );
+
+    this.server.to(client.id).emit('members', members);
   }
 }
