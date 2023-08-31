@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 
 export class UpdateAuthDto extends OmitType(CreateAuthDto, [
+  'code',
   'email',
   'password',
 ] as const) {
