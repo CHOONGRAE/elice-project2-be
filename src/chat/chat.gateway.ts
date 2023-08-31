@@ -142,9 +142,10 @@ export class ChatGateway
     @MessageBody() room: number,
   ) {
     const isAdmin = await this.userService.checkAdmin(client.userId, room);
+    const isJail = await this.userService.checkJail(client.userId, room);
     this.server
       .to(client.id)
-      .emit('myInfo', { isAdmin, userId: client.userId });
+      .emit('myInfo', { isAdmin, userId: client.userId, isJail });
   }
 
   @SubscribeMessage('members')
@@ -168,7 +169,7 @@ export class ChatGateway
     @ConnectedSocket() client: SocketWithUser,
     @MessageBody() message: { room: number; userId: number },
   ) {
-    await this.userService.userToJail(
+    await this.userService.userToggleJail(
       message.room,
       message.userId,
       client.userId,
