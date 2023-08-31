@@ -123,7 +123,6 @@ export class ChatGateway
       room,
       client.userId,
     );
-
     client.join(`room-${room}`);
     this.server.to(client.id).emit('joinRoom', messages);
   }
@@ -134,6 +133,18 @@ export class ChatGateway
     @MessageBody() room: number,
   ) {
     client.leave(`room-${room}`);
+    console.log(client.rooms);
+  }
+
+  @SubscribeMessage('myInfo')
+  async onMyinfo(
+    @ConnectedSocket() client: SocketWithUser,
+    @MessageBody() room: number,
+  ) {
+    const isAdmin = await this.userService.checkAdmin(client.userId, room);
+    this.server
+      .to(client.id)
+      .emit('myInfo', { isAdmin, userId: client.userId });
   }
 
   @SubscribeMessage('members')
