@@ -5,9 +5,10 @@ import { MessageService } from './message.service';
 import { UserService } from './user.service';
 import { RedisModule } from '@redis/redis.module';
 import { ChatController } from './chat.controller';
+import { S3Module } from '@s3';
 
 @Module({
-  imports: [RedisModule],
+  imports: [RedisModule, S3Module],
   providers: [ChatService, MessageService, UserService, ChatGateway],
   controllers: [ChatController],
 })
