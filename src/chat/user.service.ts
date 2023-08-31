@@ -22,6 +22,16 @@ export class UserService {
     });
   }
 
+  async checkAdmin(userId: number, fandomId: number) {
+    return !!(await this.prisma.fandoms.findUnique({
+      where: {
+        id: fandomId,
+        userId,
+        deletedAt: null,
+      },
+    }));
+  }
+
   async getMembers(fandomId: number, userId: number, search = '') {
     const isAdmin = await this.prisma.fandoms.findUnique({
       where: {
