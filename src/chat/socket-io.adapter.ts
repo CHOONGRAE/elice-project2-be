@@ -16,7 +16,7 @@ export class SocketIoAdapter extends IoAdapter {
 
     const optionsWithCORS: ServerOptions = {
       ...options,
-      cors: true,
+      cors: 'localhost:3000',
     };
 
     const server: Server = super.createIOServer(port, optionsWithCORS);
@@ -36,7 +36,6 @@ export class SocketIoAdapter extends IoAdapter {
           socket.userId = payload.sub;
           next();
         } catch {
-          console.log('err');
           next(new WsException('FORBIDDEN'));
         }
       });

@@ -7,3 +7,8 @@ export type SocketWithUser = SocketWithId & {
     image: string;
   };
 };
+
+export type RoomType = {
+  id: number;
+  fandomName: string;
+};
