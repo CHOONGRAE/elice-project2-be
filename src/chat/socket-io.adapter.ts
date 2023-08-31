@@ -1,7 +1,7 @@
 import { INestApplicationContext } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { IoAdapter } from '@nestjs/platform-socket.io';
-import { Server, ServerOptions, Socket } from 'socket.io';
+import { Server, ServerOptions } from 'socket.io';
 import { NextFunction } from 'express';
 import { WsException } from '@nestjs/websockets';
 import { SocketWithId } from './type';

@@ -1,10 +1,14 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { CreateMessageDto } from '@dto/messageDto/create-message.dto';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
-import { ChatGateway } from './chat.gateway';
+import { S3Service } from 'src/s3/s3.service';
 
 @Injectable()
 export class MessageService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly s3: S3Service,
+  ) {}
 
   async findMessagesForRoomByUser(room: number, userId: number) {
     const { messageId, uponJoiningMessageId } = await this.getReadedMessage(
@@ -99,5 +103,50 @@ export class MessageService {
     });
 
     return message;
+  }
+
+  async createFilesMessage(
+    userId: number,
+    files: Express.Multer.File[],
+    createMessageDto: CreateMessageDto,
+  ) {
+    const images = await Promise.all(
+      files.map((file) =>
+        this.s3.uploadImage(
+          file,
+          `messages/fandom-${createMessageDto.fandomId}/user-${userId}/`,
+        ),
+      ),
+    );
+
+    const { files: urls, ...result } = await this.prisma.messages.create({
+      data: {
+        userId,
+        ...createMessageDto,
+        content: '-',
+        files: {
+          createMany: {
+            data: images.map((url) => ({ url })),
+          },
+        },
+      },
+      select: {
+        files: {
+          select: {
+            url: true,
+          },
+        },
+        createdAt: true,
+        author: {
+          select: {
+            id: true,
+            nickName: true,
+            image: true,
+          },
+        },
+      },
+    });
+
+    return { ...result, images: urls.map(({ url }) => url) };
   }
 }
