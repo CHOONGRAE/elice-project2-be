@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 import { RedisService } from '@redis/redis.service';
+import { subscribe } from 'diagnostics_channel';
 
 @Injectable()
 export class UserService {
@@ -50,7 +51,7 @@ export class UserService {
       image: string;
       isJail?: boolean;
       isAdmin?: boolean;
-      subscribes?: { fandom: { userId: number } }[];
+      subscribes?: { userId: number; fandom: { userId: number } }[];
     }[] = await this.prisma.users.findMany({
       where: {
         deletedAt: null,
@@ -75,6 +76,7 @@ export class UserService {
             fandomId,
           },
           select: {
+            userId: true,
             fandom: {
               select: {
                 userId: true,
@@ -94,7 +96,7 @@ export class UserService {
 
     return users.map(({ subscribes, ...user }) => ({
       ...user,
-      isAdmin: subscribes[0].fandom.userId === userId,
+      isAdmin: subscribes[0].fandom.userId === subscribes[0].userId,
     }));
   }
 
