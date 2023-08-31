@@ -11,12 +11,12 @@ import {
 } from '@nestjs/websockets';
 import { ChatService } from './chat.service';
 import { Server, Socket } from 'socket.io';
-import { SocketWithUser } from './type';
+import { RoomType, SocketWithUser } from './type';
 import { UserService } from './user.service';
 import { MessageService } from './message.service';
 
 @WebSocketGateway(5050, {
-  cors: { origin: 'http://localhost:3000' },
+  cors: { origin: 'localhost:3000' },
   // namespace: /\/thief-.+/,
   namespace: 'thief-sonminsu',
   // cors: true,
@@ -41,9 +41,7 @@ export class ChatGateway
     try {
       const user = await this.userService.getUser(socket.userId);
       socket.user = user;
-
-      const rooms = await this.chatService.getRoomsForUser(socket.userId);
-      return this.server.to(socket.id).emit('rooms', rooms);
+      console.log(user, socket.id);
     } catch {
       throw new WsException('Conflict');
     }
@@ -52,11 +50,55 @@ export class ChatGateway
   handleDisconnect(@ConnectedSocket() Socket: Socket) {}
 
   @SubscribeMessage('bias')
-  handleMessage(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() message: string,
+  async handleMessage(
+    @ConnectedSocket() client: SocketWithUser,
+    @MessageBody() message: { room: number; content: string },
   ) {
-    console.log(message);
+    const { room, content } = message;
+    const { userId } = client;
+
+    const newMessage = await this.messageService.createMessage(
+      userId,
+      room,
+      content,
+    );
+
+    this.server.to(`room-${room}`).emit('bias', newMessage);
+  }
+
+  @SubscribeMessage('rooms')
+  async onRooms(@ConnectedSocket() client: SocketWithUser) {
+    const rooms = await this.chatService.getRoomsForUser(client.userId);
+    return this.server.to(client.id).emit('rooms', rooms);
+  }
+
+  @SubscribeMessage('initRoom')
+  async onInitRoom(
+    @ConnectedSocket() client: SocketWithUser,
+    @MessageBody() rooms: RoomType[],
+  ) {
+    let checks: any = await Promise.all(
+      rooms.map((room) =>
+        this.messageService.getReadedMessage(room.id, client.userId),
+      ),
+    );
+
+    checks = await Promise.all(
+      checks.map((check: any, i: number) =>
+        check
+          ? Promise.resolve(check)
+          : this.messageService.createReadedMessage(rooms[i].id, client.userId),
+      ),
+    );
+
+    const roomsInfo = await Promise.all(
+      checks.map((check) => this.chatService.getRoomInfo(check)),
+    );
+
+    this.server.to(client.id).emit(
+      'roomInfo',
+      rooms.map((v, i) => ({ ...v, ...roomsInfo[i] })),
+    );
   }
 
   @SubscribeMessage('joinRoom')
@@ -64,14 +106,21 @@ export class ChatGateway
     @ConnectedSocket() client: SocketWithUser,
     @MessageBody() room: number,
   ) {
-    const checker = await this.messageService.readedMessage(
+    console.log(room);
+    const messages = await this.messageService.findMessagesForRoomByUser(
       room,
       client.userId,
     );
-    // const messages = await this.messageService.findMessageForRoom(
-    //   room,
-    //   checker.messageId,
-    // );
-    // this.server.to(client.id).emit('messages', { room, messages });
+
+    client.join(`room-${room}`);
+    this.server.to(client.id).emit('joinRoom', messages);
+  }
+
+  @SubscribeMessage('leaveRoom')
+  async onLeaveRoom(
+    @ConnectedSocket() client: SocketWithUser,
+    @MessageBody() room: number,
+  ) {
+    client.leave(`room-${room}`);
   }
 }
