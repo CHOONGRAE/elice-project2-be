@@ -123,4 +123,30 @@ export class ChatGateway
   ) {
     client.leave(`room-${room}`);
   }
+
+  @SubscribeMessage('members')
+  async onGetMembers(
+    @ConnectedSocket() client: SocketWithUser,
+    @MessageBody() message: { room: number; search?: string },
+  ) {
+    const members = this.userService.getMembers(
+      message.room,
+      client.userId,
+      message.search,
+    );
+
+    this.server.to(client.id).emit('members', members);
+  }
+
+  @SubscribeMessage('jail')
+  async onJailUser(
+    @ConnectedSocket() client: SocketWithUser,
+    @MessageBody() message: { room: number; userId: number },
+  ) {
+    await this.userService.userToJail(
+      message.room,
+      message.userId,
+      client.userId,
+    );
+  }
 }
