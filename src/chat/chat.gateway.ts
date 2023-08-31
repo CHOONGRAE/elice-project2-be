@@ -152,11 +152,13 @@ export class ChatGateway
     @ConnectedSocket() client: SocketWithUser,
     @MessageBody() message: { room: number; search?: string },
   ) {
-    const members = this.userService.getMembers(
+    const members = await this.userService.getMembers(
       message.room,
       client.userId,
       message.search,
     );
+
+    console.log(members);
 
     this.server.to(client.id).emit('members', members);
   }
