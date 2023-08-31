@@ -15,7 +15,7 @@ import { CreateMessageDto } from '@dto/messageDto/create-message.dto';
 import { AuthGuard } from '@guards/auth.guard';
 
 @Controller({
-  path: 'chats',
+  path: 'users/chats',
   version: '1',
 })
 export class ChatController {
