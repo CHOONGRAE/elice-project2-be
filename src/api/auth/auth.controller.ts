@@ -26,6 +26,7 @@ import { CreateAuthDto } from '@dto/authDto/create-auth.dto';
 import { SigninDto } from '@dto/authDto/signin.dto';
 import { InitAuthDto } from '@dto/authDto/init-auth.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { AuthKakaoService } from './kakao/auth.kakao.service';
 
 @Controller({
   path: 'auth',
@@ -33,7 +34,27 @@ import { FileInterceptor } from '@nestjs/platform-express';
 })
 @ApiTags('Auth API')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly kakaoService: AuthKakaoService,
+  ) {}
+
+  @Post('sign-in/kakao')
+  async siginInKakao(
+    @Body() data: { code: string; domain: string },
+    @Res() res: Response,
+  ) {
+    const result = await this.kakaoService.signInKakao(data);
+
+    const {
+      data: info,
+      token: { at, rt },
+    } = result;
+
+    this.setToken(res, at, rt);
+
+    return res.json(info);
+  }
 
   @Get('verification-code')
   @HttpCode(204)
