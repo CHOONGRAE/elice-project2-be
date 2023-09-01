@@ -5,6 +5,7 @@ const isExist = (keys: string[], regExp: RegExp) =>
 
 export const resultCheck = ({ info, $ }: ExtractResult) => {
   const keys = Object.keys(info);
+  console.log(info);
 
   if (!isExist(keys, /image/i)) {
     console.log('사진 없슴');
