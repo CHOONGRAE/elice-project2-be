@@ -278,7 +278,7 @@ export class AuthService {
     );
   }
 
-  private async createTokens(id: number, email: string) {
+  async createTokens(id: number, email: string) {
     const refreshKey = await bcrypt.hash(email, 10);
 
     const accessToken = await this.jwt.signAsync(
