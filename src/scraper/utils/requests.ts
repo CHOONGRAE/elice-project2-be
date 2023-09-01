@@ -6,7 +6,7 @@ axios.defaults.maxRedirects = 0;
 const makeHeaders = (origin: string) => {
   const headers = {};
 
-  if (origin.includes('coupang')) {
+  if (/(coupang)/i.test(origin)) {
     headers['User-Agent'] = 'facebookexternalhit/1.1;kakaotalk-scrap/1.0;';
   }
 
