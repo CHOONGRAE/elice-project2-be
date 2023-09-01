@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 axios.defaults.timeout = 10 * 1000;
-axios.defaults.maxRedirects = 0;
+// axios.defaults.maxRedirects = 0;
 
 const makeHeaders = (origin: string) => {
   const headers = {};
@@ -28,7 +28,7 @@ export const requests = async (url: string) => {
 
   const customAxios = makeAxios(origin);
 
-  const response = (await customAxios.get(trimedUrl)).data;
+  const response = await customAxios.get(trimedUrl);
 
-  return response;
+  return response.data;
 };
