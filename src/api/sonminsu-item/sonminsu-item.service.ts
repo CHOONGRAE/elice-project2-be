@@ -28,7 +28,7 @@ export class SonminsuItemService {
         imgUrl: image,
         title: title,
         price: price || '정보없음',
-        originUrl: url,
+        originUrl: url || originUrl,
         groupName,
         artistName,
       },
