@@ -1,57 +1,56 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 import { AuthService } from '../auth.service';
-import axios from 'axios';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
+import * as bcrypt from 'bcrypt';
+import axios from 'axios';
 
 @Injectable()
-export class AuthKakaoService {
+export class AuthGoogleService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auth: AuthService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
   ) {}
-
-  async signInKakao(data: { code: string; domain: string }) {
+  async signInGoogle(data: { code: string; domain: string }) {
     const { code, domain } = data;
 
-    const kakaoKey = this.config.get('KAKAO_KEY');
-    const secret = this.config.get('KAKAO_SECRET');
-    const kakaoTokenUrl = 'https://kauth.kakao.com/oauth/token';
+    const googleKey = this.config.get('GOOGLE_AUTH_ID');
+    const secret = this.config.get('GOOGLE_AUTH_SECRET');
+    const googleTokenUrl = 'https://oauth2.googleapis.com/token';
 
     const body = {
       grant_type: 'authorization_code',
-      client_id: kakaoKey,
-      redirect_uri: `${domain}/login/kakao-callback`,
-      code,
+      client_id: googleKey,
       client_secret: secret,
+      redirect_uri: `${domain}/login/google-callback`,
+      code,
     };
 
     const headers = {
-      'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+      'Content-Type': 'application/x-www-form-urlencoded',
     };
 
     try {
-      const res = await axios.post(kakaoTokenUrl, body, { headers });
+      const res = await axios.post(googleTokenUrl, body, { headers });
       const { id_token } = res.data;
       const payload = this.jwt.decode(id_token) as {
-        nickname: string;
+        name: string;
         picture: string;
         email: string;
         sub: string;
       };
 
-      const { nickname, picture, email, sub } = payload;
+      const { name, picture, email, sub } = payload;
 
       const hassedSub = await bcrypt.hash(sub, 10);
 
       const isSignedUp = await this.prisma.auth.findUnique({
         where: {
           email,
-          kakao: hassedSub,
+          google: hassedSub,
           users: {
             some: {
               deletedAt: null,
@@ -91,7 +90,7 @@ export class AuthKakaoService {
             id: isExistence.id,
           },
           data: {
-            kakao: hassedSub,
+            google: hassedSub,
           },
           include: {
             users: true,
@@ -118,10 +117,10 @@ export class AuthKakaoService {
       const newAuth = await this.prisma.auth.create({
         data: {
           email,
-          kakao: hassedSub,
+          google: hassedSub,
           users: {
             create: {
-              nickName: nickname,
+              nickName: name,
               image: picture,
             },
           },

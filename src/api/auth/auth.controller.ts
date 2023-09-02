@@ -27,6 +27,7 @@ import { SigninDto } from '@dto/authDto/signin.dto';
 import { InitAuthDto } from '@dto/authDto/init-auth.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthKakaoService } from './kakao/auth.kakao.service';
+import { AuthGoogleService } from './google/auth.google.service';
 
 @Controller({
   path: 'auth',
@@ -37,6 +38,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly kakaoService: AuthKakaoService,
+    private readonly googleService: AuthGoogleService,
   ) {}
 
   @Post('sign-in/kakao')
@@ -45,6 +47,23 @@ export class AuthController {
     @Res() res: Response,
   ) {
     const result = await this.kakaoService.signInKakao(data);
+
+    const {
+      data: info,
+      token: { at, rt },
+    } = result;
+
+    this.setToken(res, at, rt);
+
+    return res.json(info);
+  }
+
+  @Post('sign-in/google')
+  async siginInGoogle(
+    @Body() data: { code: string; domain: string },
+    @Res() res: Response,
+  ) {
+    const result = await this.googleService.signInGoogle(data);
 
     const {
       data: info,
