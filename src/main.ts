@@ -23,6 +23,8 @@ const validationPipeConifg: ValidationPipeOptions = {
   errorHttpStatusCode: 400,
 };
 
+const PORT = process.env.PORT || 5000;
+
 if (process.env.NODE_ENV === 'production') {
   validationPipeConifg.forbidNonWhitelisted = true;
 }
@@ -72,7 +74,7 @@ async function bootstrap() {
 
   setupSwagger(app);
 
-  await app.listen(5000);
+  await app.listen(PORT);
 }
 
 bootstrap();
