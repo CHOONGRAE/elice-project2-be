@@ -1,18 +1,33 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { setupSwagger } from './setups/swagger';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
+import {
+  ValidationPipe,
+  ValidationPipeOptions,
+  VersioningType,
+} from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
 import { PrismaService } from './data-access/prisma/prisma.service';
 import { SocketIoAdapter } from './chat/socket-io.adapter';
+import * as expressBasicAuth from 'express-basic-auth';
 
-const validationPipeConifg = {
+process.env.NODE_ENV =
+  process.env.NODE_ENV && /prod/i.test(process.env.NODE_ENV)
+    ? 'production'
+    : 'development';
+
+const validationPipeConifg: ValidationPipeOptions = {
   whitelist: true,
   transform: true,
   transformOptions: { enableImplicitConversion: true },
-  // forbidNonWhitelisted: true,
   errorHttpStatusCode: 400,
 };
+
+const PORT = process.env.PORT || 5000;
+
+if (process.env.NODE_ENV === 'production') {
+  validationPipeConifg.forbidNonWhitelisted = true;
+}
 
 const validationPipe = new ValidationPipe(validationPipeConifg);
 
@@ -24,18 +39,20 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  app.enableCors({
-    origin: 'http://localhost:3000',
-    credentials: true,
-    exposedHeaders: ['Authorization'],
-    allowedHeaders: [
-      'Origin',
-      'X-Request-With',
-      'Content-Type',
-      'Accept',
-      'Authorization',
-    ],
-  });
+  if (process.env.NODE_ENV === 'development') {
+    app.enableCors({
+      origin: 'http://localhost:3000',
+      credentials: true,
+      exposedHeaders: ['Authorization'],
+      allowedHeaders: [
+        'Origin',
+        'X-Request-With',
+        'Content-Type',
+        'Accept',
+        'Authorization',
+      ],
+    });
+  }
 
   app.use(cookieParser());
 
@@ -43,12 +60,21 @@ async function bootstrap() {
 
   await prismaService.enableShutdownHooks(app);
 
-  setupSwagger(app);
-
   app.useGlobalPipes(validationPipe);
 
   app.useWebSocketAdapter(new SocketIoAdapter(app));
 
-  await app.listen(5000);
+  app.use(
+    ['/api-docs'],
+    expressBasicAuth({
+      challenge: true,
+      users: { [process.env.SWAGGER_USER]: process.env.SWAGGER_PASSWORD },
+    }),
+  );
+
+  setupSwagger(app);
+
+  await app.listen(PORT);
 }
+
 bootstrap();

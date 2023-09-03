@@ -15,8 +15,12 @@ import { RoomType, SocketWithUser } from './type';
 import { UserService } from './user.service';
 import { MessageService } from './message.service';
 
-@WebSocketGateway(5050, {
-  cors: {
+const gatewayOptions: Record<string, any> = {
+  namespace: /\/thief-.+/,
+};
+
+if (process.env.NODE_ENV === 'development') {
+  gatewayOptions.cors = {
     origin: 'http://localhost:3000',
     methods: ['GET', 'POST'],
     credentials: true,
@@ -28,11 +32,13 @@ import { MessageService } from './message.service';
       'Accept',
       'Authorization',
     ],
-  },
-  // namespace: /\/thief-.+/,
-  namespace: 'thief-sonminsu',
-  // cors: true,
-})
+  };
+}
+
+const PORT =
+  (process.env.SOCKET_PORT && Number(process.env.SOCKET_PORT)) || 5050;
+
+@WebSocketGateway(PORT, gatewayOptions)
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
@@ -45,15 +51,12 @@ export class ChatGateway
   @WebSocketServer()
   server: Server;
 
-  afterInit(server: Server) {
-    console.log('----------------socket init');
-  }
+  afterInit() {}
 
   async handleConnection(@ConnectedSocket() socket: SocketWithUser) {
     try {
       const user = await this.userService.getUser(socket.userId);
       socket.user = user;
-      console.log(user, socket.id);
     } catch {
       throw new WsException('Conflict');
     }
