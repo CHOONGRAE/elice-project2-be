@@ -16,7 +16,10 @@ export class SocketIoAdapter extends IoAdapter {
 
     const optionsWithCORS: ServerOptions = {
       ...options,
-      cors: {
+    };
+
+    if (process.env.NODE_ENV === 'development') {
+      optionsWithCORS.cors = {
         origin: 'http://localhost:3000',
         methods: ['GET', 'POST'],
         credentials: true,
@@ -28,29 +31,27 @@ export class SocketIoAdapter extends IoAdapter {
           'Accept',
           'Authorization',
         ],
-      },
-    };
+      };
+    }
 
     const server: Server = super.createIOServer(port, optionsWithCORS);
 
-    server
-      .of('thief-sonminsu')
-      .use((socket: SocketWithId, next: NextFunction) => {
-        const token = socket.handshake.headers.authorization
-          .replace(/bearer/i, '')
-          .trim();
+    server.of(/\/thief-.+/).use((socket: SocketWithId, next: NextFunction) => {
+      const token = socket.handshake.headers.authorization
+        .replace(/bearer/i, '')
+        .trim();
 
-        try {
-          const payload = jwt.verify(token);
-          if (payload.exp * 1000 < new Date().getTime()) {
-            new WsException('FORBIDDEN');
-          }
-          socket.userId = payload.sub;
-          next();
-        } catch {
-          next(new WsException('FORBIDDEN'));
+      try {
+        const payload = jwt.verify(token);
+        if (payload.exp * 1000 < new Date().getTime()) {
+          new WsException('FORBIDDEN');
         }
-      });
+        socket.userId = payload.sub;
+        next();
+      } catch {
+        next(new WsException('FORBIDDEN'));
+      }
+    });
 
     return server;
   }
