@@ -26,8 +26,9 @@ import { CreateAuthDto } from '@dto/authDto/create-auth.dto';
 import { SigninDto } from '@dto/authDto/signin.dto';
 import { InitAuthDto } from '@dto/authDto/init-auth.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { AuthKakaoService } from './kakao/auth.kakao.service';
-import { AuthGoogleService } from './google/auth.google.service';
+import { AuthKakaoService } from './oauth/kakao/auth.kakao.service';
+import { AuthGoogleService } from './oauth/google/auth.google.service';
+import { OauthDto } from '@dto/authDto/oauth.dto';
 
 @Controller({
   path: 'auth',
@@ -42,10 +43,7 @@ export class AuthController {
   ) {}
 
   @Post('sign-in/kakao')
-  async siginInKakao(
-    @Body() data: { code: string; domain: string },
-    @Res() res: Response,
-  ) {
+  async siginInKakao(@Body() data: OauthDto, @Res() res: Response) {
     const result = await this.kakaoService.signInKakao(data);
 
     const {
@@ -59,10 +57,7 @@ export class AuthController {
   }
 
   @Post('sign-in/google')
-  async siginInGoogle(
-    @Body() data: { code: string; domain: string },
-    @Res() res: Response,
-  ) {
+  async siginInGoogle(@Body() data: OauthDto, @Res() res: Response) {
     const result = await this.googleService.signInGoogle(data);
 
     const {
