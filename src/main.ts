@@ -9,6 +9,7 @@ import {
 import * as cookieParser from 'cookie-parser';
 import { PrismaService } from './data-access/prisma/prisma.service';
 import { SocketIoAdapter } from './chat/socket-io.adapter';
+import * as expressBasicAuth from 'express-basic-auth';
 
 process.env.NODE_ENV =
   process.env.NODE_ENV && /prod/i.test(process.env.NODE_ENV)
@@ -57,11 +58,19 @@ async function bootstrap() {
 
   await prismaService.enableShutdownHooks(app);
 
-  setupSwagger(app);
-
   app.useGlobalPipes(validationPipe);
 
   app.useWebSocketAdapter(new SocketIoAdapter(app));
+
+  app.use(
+    ['/api-docs'],
+    expressBasicAuth({
+      challenge: true,
+      users: { [process.env.SWAGGER_USER]: process.env.SWAGGER_PASSWORD },
+    }),
+  );
+
+  setupSwagger(app);
 
   await app.listen(5000);
 }
