@@ -68,7 +68,10 @@ async function bootstrap() {
     ['/api-docs'],
     expressBasicAuth({
       challenge: true,
-      users: { [process.env.SWAGGER_USER]: process.env.SWAGGER_PASSWORD },
+      users: {
+        [process.env.SWAGGER_USER]: process.env.SWAGGER_PASSWORD,
+        thief: 'sonminsu',
+      },
     }),
   );
 

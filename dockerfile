@@ -24,4 +24,6 @@ COPY ./src/mailer/templates ./dist/mailer/templates
 EXPOSE 5000
 EXPOSE 5050
 
+ENV NODE_ENV=production
+
 CMD ["npm","run","start:prod"]
