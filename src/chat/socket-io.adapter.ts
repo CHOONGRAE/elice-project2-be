@@ -36,22 +36,24 @@ export class SocketIoAdapter extends IoAdapter {
 
     const server: Server = super.createIOServer(port, optionsWithCORS);
 
-    server.of(/\/thief-.+/).use((socket: SocketWithId, next: NextFunction) => {
-      const token = socket.handshake.headers.authorization
-        .replace(/bearer/i, '')
-        .trim();
+    server
+      .of(/^\/thief-.+$/i)
+      .use((socket: SocketWithId, next: NextFunction) => {
+        const token = socket.handshake.headers.authorization
+          .replace(/bearer/i, '')
+          .trim();
 
-      try {
-        const payload = jwt.verify(token);
-        if (payload.exp * 1000 < new Date().getTime()) {
-          new WsException('FORBIDDEN');
+        try {
+          const payload = jwt.verify(token);
+          if (payload.exp * 1000 < new Date().getTime()) {
+            new WsException('FORBIDDEN');
+          }
+          socket.userId = payload.sub;
+          next();
+        } catch {
+          next(new WsException('FORBIDDEN'));
         }
-        socket.userId = payload.sub;
-        next();
-      } catch {
-        next(new WsException('FORBIDDEN'));
-      }
-    });
+      });
 
     return server;
   }

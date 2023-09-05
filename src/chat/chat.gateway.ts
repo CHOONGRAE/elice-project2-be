@@ -16,7 +16,8 @@ import { UserService } from './user.service';
 import { MessageService } from './message.service';
 
 const gatewayOptions: Record<string, any> = {
-  namespace: /\/thief-.+/,
+  // namespace: /\/thief-.+/i,
+  namespace: '/thief-sonminsu',
 };
 
 if (process.env.NODE_ENV === 'development') {
@@ -51,7 +52,9 @@ export class ChatGateway
   @WebSocketServer()
   server: Server;
 
-  afterInit() {}
+  afterInit(server: Server) {
+    console.log('init');
+  }
 
   async handleConnection(@ConnectedSocket() socket: SocketWithUser) {
     try {
@@ -62,7 +65,7 @@ export class ChatGateway
     }
   }
 
-  handleDisconnect(@ConnectedSocket() Socket: Socket) {}
+  handleDisconnect(@ConnectedSocket() socket: Socket) {}
 
   @SubscribeMessage('bias')
   async handleMessage(
