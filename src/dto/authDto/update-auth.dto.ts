@@ -10,9 +10,10 @@ import {
 
 export class UpdateAuthDto extends OmitType(CreateAuthDto, [
   'code',
-  'email',
   'password',
 ] as const) {
+  email: string;
+
   @IsOptional()
   @IsNotEmpty()
   @IsString()

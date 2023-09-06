@@ -169,6 +169,7 @@ export class FeedService {
         image: images[0].url,
         tags: tags.map(({ hashTag }) => hashTag.tag),
         comments: _count.comments,
+        likes: _count.likes,
       })),
       totalPage: Math.ceil(totalCount / perPage),
       currentPage: page,

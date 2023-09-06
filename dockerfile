@@ -26,4 +26,4 @@ EXPOSE 5050
 
 ENV NODE_ENV=production
 
-CMD ["npm","run","start:prod"]
+CMD ["pm2-runtime", "start", "ecosystem.config.js", "--env", "production"]
