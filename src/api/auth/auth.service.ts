@@ -255,9 +255,33 @@ export class AuthService {
         throw new UnauthorizedException();
       }
 
+      const user = await this.prisma.users.findUnique({
+        where: {
+          id: sub,
+          deletedAt: null,
+          authId: { not: null },
+        },
+      });
       await this.redis.delete(key);
 
-      return await this.createTokens(sub, email);
+      const {
+        id: userId,
+        nickName: nick,
+        introduction: introduce,
+        image,
+      } = user;
+
+      const token = await this.createTokens(userId, email);
+
+      return {
+        data: {
+          userId,
+          nickName: nick,
+          introduction: introduce,
+          image,
+        },
+        token,
+      };
     } catch (e) {
       throw new UnauthorizedException();
     }

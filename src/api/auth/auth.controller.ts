@@ -251,9 +251,9 @@ export class AuthController {
     description: '로그인 실패 토큰 만료',
   })
   async autoSignin(@Req() req: Request, @Res() res: Response) {
-    await this.checkToken(req, res);
+    const data = await this.checkToken(req, res);
 
-    return res.end();
+    return res.send({ data });
   }
 
   @Get('refresh-token')
@@ -271,9 +271,9 @@ export class AuthController {
     description: '토큰 만료',
   })
   async refreshToken(@Req() req: Request, @Res() res: Response) {
-    await this.checkToken(req, res);
+    const data = await this.checkToken(req, res);
 
-    return res.end();
+    return res.send({ data });
   }
 
   private async checkToken(req: Request, res: Response) {
@@ -281,9 +281,14 @@ export class AuthController {
 
     if (!rt) throw new UnauthorizedException();
 
-    const { at, rt: newRt } = await this.authService.refreshToken(rt);
+    const {
+      data,
+      token: { at, rt: newRt },
+    } = await this.authService.refreshToken(rt);
 
-    return this.setToken(res, at, newRt);
+    this.setToken(res, at, newRt);
+
+    return data;
   }
 
   private setToken(res: Response, at: string, rt: string) {

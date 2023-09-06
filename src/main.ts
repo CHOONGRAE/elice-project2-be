@@ -65,7 +65,7 @@ async function bootstrap() {
   app.useWebSocketAdapter(new SocketIoAdapter(app));
 
   app.use(
-    ['/api-docs'],
+    '/api-docs',
     expressBasicAuth({
       challenge: true,
       users: {
