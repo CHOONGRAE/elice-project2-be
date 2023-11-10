@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
@@ -12,6 +13,7 @@ import { SigninDto } from '@dto/authDto/signin.dto';
 import { MailerService } from 'src/mailer/mailer.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { InitAuthDto } from '@dto/authDto/init-auth.dto';
 import { S3Service } from 'src/s3/s3.service';
 
 const ALPHABET = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
@@ -39,11 +41,11 @@ export class AuthService {
   ) {}
 
   async sendVerificationCode({ email }: SendVerificationCodeDto) {
-    const exUser = await this.prisma.auth.findMany({
+    const exUser = await this.prisma.auth.findUnique({
       where: { email },
     });
 
-    if (exUser.length) {
+    if (exUser) {
       throw new ConflictException();
     }
 
@@ -64,62 +66,171 @@ export class AuthService {
     if (!isVerificated) {
       throw new ConflictException();
     }
-
-    await this.redis.delete(email);
   }
 
   async signup(createAuthDto: CreateAuthDto) {
-    const { email, password, userName, birthDate, phoneNumber } = createAuthDto;
+    const { code, email, password, userName, phoneNumber, birthDate } =
+      createAuthDto;
+    await this.confirmVerificationCode({ code, email });
+
+    await this.redis.delete(email);
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const { id } = await this.prisma.auth.create({
+    await this.prisma.auth.create({
       data: {
         email,
-        password: hashedPassword,
         userName,
-        birthDate,
         phoneNumber,
+        birthDate,
+        password: hashedPassword,
       },
     });
-
-    return await this.createTokens(id, email);
   }
 
   async signin({ email, password }: SigninDto) {
-    const exUser = await this.prisma.auth.findMany({
+    const exUser = await this.prisma.auth.findUnique({
       where: {
         email,
-        users: {
-          some: {
-            authId: { not: null },
-          },
-        },
       },
-      select: {
-        password: true,
+      include: {
         users: {
-          select: { id: true },
+          where: {
+            deletedAt: null,
+          },
         },
       },
     });
 
-    if (!exUser.length) {
-      throw new UnauthorizedException();
+    if (!exUser) {
+      throw new BadRequestException();
+    }
+
+    const isValidated = await bcrypt.compare(password, exUser.password);
+
+    if (!isValidated) {
+      throw new BadRequestException();
+    }
+
+    if (!exUser.users.length) {
+      const it = await this.createInitToken(exUser);
+
+      return { it };
     }
 
     const {
-      users: [{ id }],
-      password: hashedPassword,
-    } = exUser[0];
+      users: [{ id, nickName, introduction, image }],
+    } = exUser;
 
-    const isValidated = await bcrypt.compare(password, hashedPassword);
+    const token = await this.createTokens(id, email);
 
-    if (!isValidated) {
+    return {
+      data: {
+        id,
+        nickName,
+        introduction,
+        image,
+      },
+      token,
+    };
+  }
+
+  async initInformation(it: string, initDto: InitAuthDto) {
+    try {
+      const {
+        id,
+        name,
+        email,
+        type,
+        exp,
+      }: {
+        id: number;
+        name: string;
+        email: string;
+        type: string;
+        exp: number;
+      } = await this.jwt.verifyAsync(it);
+
+      if (
+        type !== 'init' ||
+        !id ||
+        !name ||
+        !email ||
+        exp * 1000 < new Date().getTime()
+      ) {
+        throw new UnauthorizedException();
+      }
+
+      const { file, nickName, introduction } = initDto;
+
+      const result = await this.prisma.auth.update({
+        where: {
+          id,
+        },
+        data: {
+          users: {
+            create: {
+              nickName: nickName || name,
+              introduction,
+              image: file && (await this.s3.uploadImage(file, `users/${id}/`)),
+              buckets: {
+                create: {
+                  bucketName: '나의 버킷 리스트',
+                },
+              },
+            },
+          },
+        },
+        include: {
+          users: {
+            where: {
+              deletedAt: null,
+            },
+          },
+        },
+      });
+
+      const {
+        users: [{ id: userId, nickName: nick, introduction: introduce, image }],
+      } = result;
+
+      const token = await this.createTokens(userId, email);
+
+      return {
+        data: {
+          userId,
+          nickName: nick,
+          introduction: introduce,
+          image,
+        },
+        token,
+      };
+    } catch (e) {
       throw new UnauthorizedException();
     }
+  }
 
-    return await this.createTokens(id, email);
+  async signout(rt: string) {
+    const trimedRt = rt.replace(/bearer/i, '').trim();
+
+    try {
+      const { key, exp }: { key: string; exp: number } =
+        await this.jwt.verifyAsync(trimedRt);
+
+      const checker = (await this.redis.get(key)) as string;
+
+      if (
+        exp * 1000 < new Date().getTime() ||
+        !checker ||
+        checker !== trimedRt
+      ) {
+        throw new UnauthorizedException();
+      }
+
+      await this.redis.delete(key);
+    } catch (e) {
+      throw new UnauthorizedException();
+    }
   }
 
   async refreshToken(rt: string) {
@@ -144,15 +255,54 @@ export class AuthService {
         throw new UnauthorizedException();
       }
 
+      const user = await this.prisma.users.findUnique({
+        where: {
+          id: sub,
+          deletedAt: null,
+          authId: { not: null },
+        },
+      });
       await this.redis.delete(key);
 
-      return await this.createTokens(sub, email);
+      const {
+        id: userId,
+        nickName: nick,
+        introduction: introduce,
+        image,
+      } = user;
+
+      const token = await this.createTokens(userId, email);
+
+      return {
+        data: {
+          userId,
+          nickName: nick,
+          introduction: introduce,
+          image,
+        },
+        token,
+      };
     } catch (e) {
       throw new UnauthorizedException();
     }
   }
 
-  private async createTokens(id: number, email: string) {
+  private async createInitToken({
+    id,
+    userName: name,
+    email,
+  }: {
+    id: number;
+    userName: string;
+    email: string;
+  }) {
+    return await this.jwt.signAsync(
+      { type: 'init', id, name, email },
+      { expiresIn: 5 * 60 },
+    );
+  }
+
+  async createTokens(id: number, email: string) {
     const refreshKey = await bcrypt.hash(email, 10);
 
     const accessToken = await this.jwt.signAsync(

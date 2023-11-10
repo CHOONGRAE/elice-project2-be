@@ -1,26 +1,20 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { CreateSonminsuRequestDto } from './create-sonminsuRequest.dto';
-import { IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-export class UpdateSonminsuRequestDto extends PartialType(
+export class UpdateSonminsuRequestDto extends OmitType(
   CreateSonminsuRequestDto,
+  ['artistName', 'groupName', 'image'] as const,
 ) {
+  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  @ApiProperty()
+  @ApiProperty({ required: false, type: 'string' })
   title: string;
 
+  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  @ApiProperty()
+  @ApiProperty({ required: false, type: 'string' })
   content: string;
-
-  @IsString()
-  @ApiProperty()
-  groupName: string;
-
-  @IsString()
-  @ApiProperty()
-  artistName: string;
-
-  @IsString()
-  image: Express.Multer.File;
 }

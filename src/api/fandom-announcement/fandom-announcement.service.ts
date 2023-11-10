@@ -1,10 +1,15 @@
 import { CreateFandomAnnouncementDto } from '@dto/fandomAnnouncement/create-announcement.dto';
 import { UpdateFandomAnnouncementDto } from '@dto/fandomAnnouncement/update-announcement.dto';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 
-const filter = () =>
-  new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+const FILTER_ONE_WEEK = new Date(
+  Date.now() - 7 * 24 * 60 * 60 * 1000,
+).toISOString();
 
 @Injectable()
 export class FandomAnnouncementService {
@@ -15,6 +20,17 @@ export class FandomAnnouncementService {
     fandomId: number,
     createFandomAnnouncementDto: CreateFandomAnnouncementDto,
   ) {
+    const check = await this.prisma.fandomAnnouncements.count({
+      where: {
+        userId,
+        fandomId,
+        createdAt: { gte: FILTER_ONE_WEEK },
+        deletedAt: null,
+      },
+    });
+
+    if (!!check) throw new ConflictException();
+
     const createdFandomAnnouncement =
       await this.prisma.fandomAnnouncements.create({
         data: {
@@ -64,28 +80,19 @@ export class FandomAnnouncementService {
       });
   }
 
-  async getFandomAnnouncements() {
+  async getFandomAnnouncementsByFandomId(fandomId: number) {
     const result = await this.prisma.fandomAnnouncements.findMany({
       where: {
-        createdAt: { gte: filter() },
+        fandomId,
         deletedAt: null,
+        createdAt: {
+          gte: FILTER_ONE_WEEK,
+        },
       },
       select: this.selectField,
     });
 
-    return { data: result };
-  }
-
-  async getFandomAnnouncementsById(id: number) {
-    const result = await this.prisma.fandomAnnouncements.findUnique({
-      where: {
-        id,
-        deletedAt: null,
-      },
-      select: this.selectField,
-    });
-
-    return { data: result };
+    return { data: result.length ? result[0] : null };
   }
 
   private readonly selectField = {
@@ -95,6 +102,11 @@ export class FandomAnnouncementService {
         id: true,
         nickName: true,
         image: true,
+      },
+    },
+    fandom: {
+      select: {
+        fandomName: true,
       },
     },
     content: true,

@@ -2,7 +2,7 @@ import { CreateSonminsuRequestDto } from '@dto/sonminsuRequestDto/create-sonmins
 import { GetSonminsuRequestDto } from '@dto/sonminsuRequestDto/get-sonmisuRequest.dto';
 import { PaginateSonminsuRequestDto } from '@dto/sonminsuRequestDto/paginate-sonminsuRequest.dto';
 import { UpdateSonminsuRequestDto } from '@dto/sonminsuRequestDto/update-sonminsuRequest.dto';
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import { PrismaService } from '@prisma/prisma.service';
@@ -22,32 +22,24 @@ export class SonminsuRequestService {
     const { title, content, groupName, artistName, image } =
       createSonminsuRequestDto;
 
-    const { images, _count, ...createdSonminsuRequest } =
-      await this.prisma.sonminsuRequests.create({
-        data: {
-          userId,
-          title,
-          content,
-          groupName,
-          artistName,
-          images: {
-            create: {
-              url: await this.s3.uploadImage(
-                image,
-                `requests/author-${userId}/`,
-              ),
-            },
+    const createdSonminsuRequest = await this.prisma.sonminsuRequests.create({
+      data: {
+        userId,
+        title,
+        content,
+        groupName,
+        artistName,
+        images: {
+          create: {
+            url: await this.s3.uploadImage(image, `requests/author-${userId}/`),
           },
         },
-        select: this.detailSelectField,
-      });
+      },
+      select: this.detailSelectField,
+    });
 
     return {
-      data: {
-        ...createdSonminsuRequest,
-        image: images[0]?.url || null,
-        answerCnt: _count.answers,
-      },
+      data: this.transFormDetailData(createdSonminsuRequest),
     };
   }
 
@@ -56,45 +48,28 @@ export class SonminsuRequestService {
     userId: number,
     updateSonminsuRequestDto: UpdateSonminsuRequestDto,
   ) {
-    const { title, content, groupName, artistName, image } =
-      updateSonminsuRequestDto;
+    const { title, content } = updateSonminsuRequestDto;
 
-    const { images, _count, ...updatedSonminsuRequest } =
-      await this.prisma.sonminsuRequests.update({
-        where: {
-          id,
-          userId,
-          deletedAt: null,
-        },
-        data: {
-          title,
-          content,
-          groupName,
-          artistName,
-          images: {
-            deleteMany: {},
-            create: {
-              url: await this.s3.uploadImage(
-                image,
-                `requests/author-${userId}/`,
-              ),
-            },
-          },
-        },
-        select: this.detailSelectField,
-      });
+    const updatedSonminsuRequest = await this.prisma.sonminsuRequests.update({
+      where: {
+        id,
+        userId,
+        deletedAt: null,
+      },
+      data: {
+        title,
+        content,
+      },
+      select: this.detailSelectField,
+    });
 
     return {
-      data: {
-        ...updatedSonminsuRequest,
-        image: images[0]?.url || null,
-        answerCnt: _count.answers,
-      },
+      data: this.transFormDetailData(updatedSonminsuRequest),
     };
   }
 
   async deleteSonminsuRequest(id: number, userId: number) {
-    const deletedSonminsuRequest = await this.prisma.sonminsuRequests
+    await this.prisma.sonminsuRequests
       .update({
         where: {
           id,
@@ -106,40 +81,37 @@ export class SonminsuRequestService {
         },
       })
       .catch(() => {
-        throw new ConflictException();
+        throw new ForbiddenException();
       });
-
-    return deletedSonminsuRequest;
   }
 
   async getSonminsuRequests(getSonminsuRequestDto: GetSonminsuRequestDto) {
     const { done, page, perPage } = getSonminsuRequestDto;
 
-    const [result, totalCount] = await this.prisma.$transaction([
-      this.prisma.sonminsuRequests.findMany({
-        skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
-        take: Math.max(0, perPage || 10),
-        where: {
-          isDone: done,
-          deletedAt: null,
-        },
-        select: this.listSelectField,
-      }),
-      this.prisma.sonminsuRequests.count({
-        where: {
-          isDone: done,
-          deletedAt: null,
-        },
-      }),
-    ]);
+    const result = await this.prisma.sonminsuRequests.findMany({
+      skip: perPage * (page - 1),
+      take: perPage,
+      where: {
+        isDone: done,
+        deletedAt: null,
+      },
+      select: this.listSelectField,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const totalCount = await this.prisma.sonminsuRequests.count({
+      where: {
+        isDone: done,
+        deletedAt: null,
+      },
+    });
 
     return {
-      data: result.map(({ images, ...value }) => ({
-        image: images[0]?.url || null,
-        ...value,
-      })),
-      totalPage: Math.ceil(totalCount / (perPage || 10)),
-      currentPage: page || 1,
+      data: result.map(this.transFormData),
+      totalPage: Math.ceil(totalCount / perPage),
+      currentPage: page,
     };
   }
 
@@ -149,33 +121,32 @@ export class SonminsuRequestService {
   ) {
     const { done, page, perPage } = getSonminsuRequestDto;
 
-    const [result, totalCount] = await this.prisma.$transaction([
-      this.prisma.sonminsuRequests.findMany({
-        skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
-        take: Math.max(0, perPage || 10),
-        where: {
-          userId,
-          isDone: done,
-          deletedAt: null,
-        },
-        select: this.listSelectField,
-      }),
-      this.prisma.sonminsuRequests.count({
-        where: {
-          userId,
-          isDone: done,
-          deletedAt: null,
-        },
-      }),
-    ]);
+    const result = await this.prisma.sonminsuRequests.findMany({
+      skip: perPage * (page - 1),
+      take: perPage,
+      where: {
+        userId,
+        isDone: done,
+        deletedAt: null,
+      },
+      select: this.listSelectField,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const totalCount = await this.prisma.sonminsuRequests.count({
+      where: {
+        userId,
+        isDone: done,
+        deletedAt: null,
+      },
+    });
 
     return {
-      data: result.map(({ images, ...value }) => ({
-        image: images[0]?.url || null,
-        ...value,
-      })),
-      totalPage: Math.ceil(totalCount / (perPage || 10)),
-      currentPage: page || 1,
+      data: result.map(this.transFormData),
+      totalPage: Math.ceil(totalCount / perPage),
+      currentPage: page,
     };
   }
 
@@ -185,60 +156,102 @@ export class SonminsuRequestService {
   ) {
     const { page, perPage } = paginateSonminsuRequestDto;
 
-    const [result, totalCount] = await this.prisma.$transaction([
-      this.prisma.sonminsuRequestBookmarks.findMany({
-        skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
-        take: Math.max(0, perPage || 10),
-        where: {
-          userId,
-          requrest: {
-            deletedAt: null,
-          },
+    const result = await this.prisma.sonminsuRequestBookmarks.findMany({
+      skip: perPage * (page - 1),
+      take: perPage,
+      where: {
+        userId,
+        request: {
+          deletedAt: null,
         },
-        select: {
-          requrest: {
-            select: this.listSelectField,
-          },
+      },
+      select: {
+        request: {
+          select: this.listSelectField,
         },
-      }),
-      this.prisma.sonminsuRequestBookmarks.count({
-        where: {
-          userId,
-          requrest: {
-            deletedAt: null,
-          },
+      },
+    });
+
+    const totalCount = await this.prisma.sonminsuRequestBookmarks.count({
+      where: {
+        userId,
+        request: {
+          deletedAt: null,
         },
-      }),
-    ]);
+      },
+    });
 
     return {
-      data: result.map(({ requrest: { images, ...value } }) => ({
-        image: images[0]?.url || null,
-        ...value,
-      })),
-      totalPage: Math.ceil(totalCount / (perPage || 10)),
-      currentPage: page || 1,
+      data: result.map(({ request }) => this.transFormData(request)),
+      totalPage: Math.ceil(totalCount / perPage),
+      currentPage: page,
     };
   }
 
   async getSonminsuRequest(id: number) {
-    const { images, _count, ...result } =
-      await this.prisma.sonminsuRequests.findUnique({
-        where: {
-          id,
-          deletedAt: null,
-        },
-        select: this.detailSelectField,
-      });
+    const result = await this.prisma.sonminsuRequests.findUnique({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      select: {
+        ...this.detailSelectField,
+      },
+    });
 
     return {
-      data: {
-        image: images[0]?.url || null,
-        ...result,
-        answerCnt: _count.answers,
-      },
+      data: this.transFormDetailData(result),
     };
   }
+
+  async getSonminsuRequestForUser(userId: number, id: number) {
+    const result = await this.prisma.sonminsuRequests.findUnique({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      select: {
+        bookmarks: {
+          where: {
+            userId: { equals: userId },
+          },
+          select: {
+            userId: true,
+          },
+        },
+        ...this.detailSelectField,
+      },
+    });
+
+    return {
+      data: this.transFormDetailData(result),
+    };
+  }
+
+  private readonly transFormData = ({ images, ...value }) => ({
+    image: images[0]?.url || null,
+    ...value,
+  });
+
+  private readonly transFormDetailData = ({
+    images,
+    _count,
+    bookmarks,
+    answers,
+    ...data
+  }) => ({
+    image: images[0]?.url || null,
+    isBookmark: !!bookmarks?.length,
+    ...data,
+    answerCnt: _count.answers,
+    answers: answers.map(({ user: { _count, ...user }, ...answer }) => ({
+      ...answer,
+      user: {
+        ...user,
+        choosedCnt: _count.sonminsuAnswers,
+      },
+    })),
+  });
 
   private readonly listSelectField: Prisma.SonminsuRequestsSelect<DefaultArgs> =
     {
@@ -253,6 +266,7 @@ export class SonminsuRequestService {
         select: {
           id: true,
           nickName: true,
+          image: true,
         },
       },
       createdAt: true,
@@ -265,10 +279,12 @@ export class SonminsuRequestService {
       content: true,
       groupName: true,
       artistName: true,
+      createdAt: true,
       user: {
         select: {
           id: true,
           nickName: true,
+          image: true,
         },
       },
       images: {
@@ -289,8 +305,12 @@ export class SonminsuRequestService {
         orderBy: {
           createdAt: 'desc',
         },
+        where: {
+          deletedAt: null,
+        },
         select: {
           id: true,
+          isChoosed: true,
           user: {
             select: {
               id: true,
@@ -308,11 +328,13 @@ export class SonminsuRequestService {
           items: {
             select: {
               id: true,
+              title: true,
               originUrl: true,
               imgUrl: true,
               price: true,
             },
           },
+          createdAt: true,
         },
       },
     };

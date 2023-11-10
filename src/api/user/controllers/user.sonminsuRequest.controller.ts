@@ -10,6 +10,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -55,6 +56,34 @@ export class UserSonminsuRequsetsController {
     );
   }
 
+  @Get('bookmarks')
+  @ApiOperation({
+    summary: '본인이 찜한 의뢰 목록',
+  })
+  async getSonminsuRequestBookmarks(
+    @User() userId: number,
+    @Query() paginateSonminsuRequestDto: PaginateSonminsuRequestDto,
+  ) {
+    return await this.sonminsuRequestService.getSonminsuRequestsByBookmark(
+      userId,
+      paginateSonminsuRequestDto,
+    );
+  }
+
+  @Get(':requestId')
+  @ApiOperation({
+    summary: '북마크 정보있는 의뢰 상세',
+  })
+  async getSonminsuRequest(
+    @User() userId: number,
+    @Param('requestId') id: number,
+  ) {
+    return await this.sonminsuRequestService.getSonminsuRequestForUser(
+      userId,
+      id,
+    );
+  }
+
   @Post()
   @UseInterceptors(
     FileInterceptor('image', {
@@ -83,48 +112,31 @@ export class UserSonminsuRequsetsController {
     });
   }
 
-  @Get('bookmarks')
-  @ApiOperation({
-    summary: '본인이 찜한 의뢰 목록',
-  })
-  async getSonminsuRequestBookmarks(
-    @User() userId: number,
-    @Query() paginateSonminsuRequestDto: PaginateSonminsuRequestDto,
-  ) {
-    return await this.sonminsuRequestService.getSonminsuRequestsByBookmark(
-      userId,
-      paginateSonminsuRequestDto,
-    );
-  }
-
   @Patch(':requestId')
-  @UseInterceptors(
-    FileInterceptor('image', {
-      fileFilter: (req, file, cb) => {
-        if (/image/i.test(file.mimetype)) {
-          file.originalname = Buffer.from(file.originalname, 'latin1').toString(
-            'utf-8',
-          );
-          cb(null, true);
-        } else cb(new BadRequestException(), true);
-      },
-    }),
-  )
-  @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: '의뢰 수정',
   })
   async updateSonminsuRequest(
     @User() userId: number,
     @Param('requestId') requestId: number,
-    @UploadedFile() image: Express.Multer.File,
     @Body() updateSonminsuRequestDto: UpdateSonminsuRequestDto,
   ) {
     return await this.sonminsuRequestService.updateSonminsuRequest(
       requestId,
       userId,
-      { ...updateSonminsuRequestDto, image },
+      updateSonminsuRequestDto,
     );
+  }
+
+  @Delete(':requestId')
+  @ApiOperation({
+    summary: '의뢰 삭제',
+  })
+  async deleteSonminsuRequest(
+    @User() userId: number,
+    @Param('requestId') id: number,
+  ) {
+    await this.sonminsuRequestService.deleteSonminsuRequest(id, userId);
   }
 
   @Put(':requestId/bookmarks')

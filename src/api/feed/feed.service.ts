@@ -1,5 +1,4 @@
 import { HashTagService } from '@api/hash-tag/hash-tag.service';
-import { SonminsuItemService } from '@api/sonminsu-item/sonminsu-item.service';
 import { CreateFeedDto } from '@dto/feedDto/create-feed.dto';
 import { PaginateFeedDto } from '@dto/feedDto/paginate-feed.dto';
 import { UpdateFeedDto } from '@dto/feedDto/update-feed.dto';
@@ -12,7 +11,6 @@ export class FeedService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly s3: S3Service,
-    private readonly sonminsuItem: SonminsuItemService,
     private readonly hashTag: HashTagService,
   ) {}
 
@@ -53,6 +51,15 @@ export class FeedService {
           },
           select: this.selectField,
         }),
+        this.prisma.sonminsuItems.updateMany({
+          where: {
+            id: { in: sonminsuItems || [] },
+          },
+          data: {
+            groupName,
+            artistName,
+          },
+        }),
         this.prisma.fandomRanks.update({
           where: {
             fandomId,
@@ -80,7 +87,7 @@ export class FeedService {
     feedId: number,
     updateFeedDto: UpdateFeedDto,
   ) {
-    const { content, hashTags, sonminsuItems } = updateFeedDto;
+    const { content, hashTags } = updateFeedDto;
 
     const { images, tags, _count, ...updatedFeed } = await this.prisma.feeds
       .update({
@@ -94,9 +101,6 @@ export class FeedService {
           tags: {
             deleteMany: {},
             create: await this.createHashTags(hashTags || []),
-          },
-          sonminsuItems: {
-            connect: (sonminsuItems || []).map((id) => ({ id })),
           },
         },
         select: this.selectField,
@@ -135,24 +139,29 @@ export class FeedService {
   async getFeeds(pagination: PaginateFeedDto) {
     const { page, perPage } = pagination;
 
-    const [results, totalCount] = await this.prisma.$transaction([
-      this.prisma.feeds.findMany({
-        skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
-        take: Math.max(0, perPage || 10),
-        where: {
+    const results = await this.prisma.feeds.findMany({
+      skip: perPage * (page - 1),
+      take: perPage,
+      where: {
+        deletedAt: null,
+        author: {
           deletedAt: null,
         },
-        select: this.selectField,
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
-      this.prisma.feeds.count({
-        where: {
+      },
+      select: this.selectField,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const totalCount = await this.prisma.feeds.count({
+      where: {
+        deletedAt: null,
+        author: {
           deletedAt: null,
         },
-      }),
-    ]);
+      },
+    });
 
     return {
       data: results.map(({ images, tags, _count, ...result }) => ({
@@ -160,9 +169,10 @@ export class FeedService {
         image: images[0].url,
         tags: tags.map(({ hashTag }) => hashTag.tag),
         comments: _count.comments,
+        likes: _count.likes,
       })),
-      totalPage: Math.ceil(totalCount / (perPage || 10)),
-      currentPage: page || 1,
+      totalPage: Math.ceil(totalCount / perPage),
+      currentPage: page,
     };
   }
 
@@ -178,62 +188,77 @@ export class FeedService {
     //     `;
     //     return feeds;
 
-    const [results, totalCount] = await this.prisma.$transaction([
-      this.prisma.feeds.findMany({
-        skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
-        take: Math.max(0, perPage || 10),
-        where: {
-          userId: { not: userId },
-          deletedAt: null,
+    const totalCount = await this.prisma.feeds.count({
+      where: {
+        userId: { not: userId },
+        deletedAt: null,
+      },
+    });
+
+    const { orderBy, orderDir } = this.randomOrder();
+
+    const results = await this.prisma.feeds.findMany({
+      skip: perPage * (page - 1),
+      take: perPage,
+      where: {
+        userId: { not: userId },
+        deletedAt: null,
+      },
+      select: {
+        ...this.selectField,
+        likes: {
+          where: {
+            userId,
+          },
         },
-        select: this.selectField,
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
-      this.prisma.feeds.count({
-        where: {
-          userId: { not: userId },
-          deletedAt: null,
-        },
-      }),
-    ]);
+      },
+      orderBy: {
+        [orderBy]: orderDir,
+      },
+    });
 
     return {
-      data: results.map(({ images, tags, _count, ...result }) => ({
+      data: results.map(({ images, tags, _count, likes, ...result }) => ({
         ...result,
         image: images[0].url,
         tags: tags.map(({ hashTag }) => hashTag.tag),
         comments: _count.comments,
+        likes: _count.likes,
+        isLike: !!likes.length,
       })),
-      totalPage: Math.ceil(totalCount / (perPage || 10)),
-      currentPage: page || 1,
+      totalPage: Math.ceil(totalCount / perPage),
+      currentPage: page,
     };
   }
 
   async getFeedsByAuthor(userId: number, pagination: PaginateFeedDto) {
     const { page, perPage } = pagination;
 
-    const [results, totalCount] = await this.prisma.$transaction([
-      this.prisma.feeds.findMany({
-        skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
-        take: Math.max(0, perPage || 10),
-        where: {
-          userId,
+    const results = await this.prisma.feeds.findMany({
+      skip: perPage * (page - 1),
+      take: perPage,
+      where: {
+        userId,
+        deletedAt: null,
+        author: {
           deletedAt: null,
         },
-        select: this.selectField,
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
-      this.prisma.feeds.count({
-        where: {
-          userId,
+      },
+      select: this.selectField,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const totalCount = await this.prisma.feeds.count({
+      where: {
+        userId,
+        deletedAt: null,
+        author: {
           deletedAt: null,
         },
-      }),
-    ]);
+      },
+    });
 
     return {
       data: results.map(({ images, tags, _count, ...result }) => ({
@@ -241,35 +266,43 @@ export class FeedService {
         image: images[0].url,
         tags: tags.map(({ hashTag }) => hashTag.tag),
         comments: _count.comments,
+        likes: _count.likes,
       })),
-      totalPage: Math.ceil(totalCount / (perPage || 10)),
-      currentPage: page || 1,
+      totalPage: Math.ceil(totalCount / perPage),
+      currentPage: page,
     };
   }
 
   async getFeedsByFandom(fandomId: number, pagination: PaginateFeedDto) {
     const { page, perPage } = pagination;
 
-    const [results, totalCount] = await this.prisma.$transaction([
-      this.prisma.feeds.findMany({
-        skip: Math.max(0, (perPage || 10) * ((page || 1) - 1)),
-        take: Math.max(0, perPage || 10),
-        where: {
-          fandomId,
+    console.log(fandomId);
+
+    const results = await this.prisma.feeds.findMany({
+      skip: perPage * (page - 1),
+      take: perPage,
+      where: {
+        fandomId,
+        deletedAt: null,
+        author: {
           deletedAt: null,
         },
-        select: this.selectField,
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
-      this.prisma.feeds.count({
-        where: {
-          fandomId,
+      },
+      select: this.selectField,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const totalCount = await this.prisma.feeds.count({
+      where: {
+        fandomId,
+        deletedAt: null,
+        author: {
           deletedAt: null,
         },
-      }),
-    ]);
+      },
+    });
 
     return {
       data: results.map(({ images, tags, _count, ...result }) => ({
@@ -278,8 +311,8 @@ export class FeedService {
         tags: tags.map(({ hashTag }) => hashTag.tag),
         comments: _count.comments,
       })),
-      totalPage: Math.ceil(totalCount / (perPage || 10)),
-      currentPage: page || 1,
+      totalPage: Math.ceil(totalCount / perPage),
+      currentPage: page,
     };
   }
 
@@ -288,6 +321,10 @@ export class FeedService {
       await this.prisma.feeds.findUnique({
         where: {
           id,
+          deletedAt: null,
+          author: {
+            deletedAt: null,
+          },
         },
         select: { ...this.selectField, groupName: true, artistName: true },
       });
@@ -298,6 +335,40 @@ export class FeedService {
         image: images[0].url,
         tags: tags.map(({ hashTag }) => hashTag.tag),
         comments: _count.comments,
+      },
+    };
+  }
+
+  async getFeedByIdForUser(id: number, userId: number) {
+    const { images, tags, _count, likes, ...feed } =
+      await this.prisma.feeds.findUnique({
+        where: {
+          id,
+          deletedAt: null,
+          author: {
+            deletedAt: null,
+          },
+        },
+        select: {
+          ...this.selectField,
+          groupName: true,
+          artistName: true,
+          likes: {
+            where: {
+              userId,
+            },
+          },
+        },
+      });
+
+    return {
+      data: {
+        ...feed,
+        image: images[0].url,
+        tags: tags.map(({ hashTag }) => hashTag.tag),
+        comments: _count.comments,
+        likes: _count.likes,
+        isLike: !!likes.length,
       },
     };
   }
@@ -344,6 +415,10 @@ export class FeedService {
     sonminsuItems: {
       select: {
         id: true,
+        originUrl: true,
+        imgUrl: true,
+        title: true,
+        price: true,
       },
     },
     _count: {
@@ -353,7 +428,20 @@ export class FeedService {
             deletedAt: null,
           },
         },
+        likes: true,
       },
     },
   };
+
+  private randomOrder() {
+    const randomPick = (values: string[]) => {
+      const index = Math.floor(Math.random() * values.length);
+      return values[index];
+    };
+
+    const orderBy = randomPick(['id', 'userId', 'content', 'createdAt']);
+    const orderDir = randomPick([`asc`, `desc`]);
+
+    return { orderBy, orderDir };
+  }
 }

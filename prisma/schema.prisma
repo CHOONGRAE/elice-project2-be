@@ -9,11 +9,13 @@ datasource db {
 
 model Auth {
   id Int @id @default(autoincrement()) 
-  email String
-  password String
+  email String @unique
+  password String?
   userName String? @map("user_name")
   birthDate String? @map("birth_date")
   phoneNumber String? @map("phone_number")
+  kakao String?
+  google String?
 
   users Users[]
 }
@@ -29,8 +31,8 @@ model Users{
 
   auth Auth? @relation(fields: [authId], references: [id])
 
-  followers Follows[] @relation("Follower")
   follows Follows[] @relation("Follow")
+  followers Follows[] @relation("Follower")
   fandoms Fandoms[]
   fandomAnnouncements FandomAnnouncements[]
   subscribes Subscribes[]
@@ -48,8 +50,8 @@ model Users{
 model Follows {
   userId Int @map("user_id")
   followId Int @map("follow_id")
-  follower Users @relation("Follower", fields: [userId], references: [id], onDelete: Cascade)
-  follow Users @relation("Follow", fields: [followId], references: [id], onDelete: Cascade)
+  follower Users @relation("Follow", fields: [userId], references: [id], onDelete: Cascade)
+  follow Users @relation("Follower", fields: [followId], references: [id], onDelete: Cascade)
 
   @@id([userId,followId])
 }
@@ -69,6 +71,7 @@ model Fandoms {
   subscribes Subscribes[]
   feeds Feeds[]
   messages Messages[]
+  readedMessages ReadedMessages[]
 }
 
 model FandomRanks {
@@ -194,7 +197,7 @@ model SonminsuRequestBookmarks {
   requestId Int @map("request_id")
 
   user Users @relation(fields: [userId], references: [id], onDelete: Cascade)
-  requrest SonminsuRequests @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  request SonminsuRequests @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
   @@id([userId,requestId])
 }
@@ -286,10 +289,12 @@ model MessageFiles {
 }
 
 model ReadedMessages {
-  userId Int @id @map("user_id")
+  userId Int @map("user_id")
   fandomId Int @map("fandom_id")
   messageId Int @default(0) @map("message_id")
-  inRoomMessage_id Int @default(0) @map("in_room_message_id")
+  uponJoiningMessageId Int @default(0) @map("upon_joining_message_id")
 
   user Users @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fandom Fandoms @relation(fields: [fandomId], references: [id], onDelete: Cascade)
+  @@id([userId,fandomId])
 }

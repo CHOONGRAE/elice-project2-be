@@ -61,6 +61,7 @@ export class SonminsuAnswerService {
           id,
           userId,
           deletedAt: null,
+          isChoosed: null,
         },
         data: {
           deletedAt: new Date().toISOString(),
@@ -98,6 +99,11 @@ export class SonminsuAnswerService {
               },
             },
           },
+          request: {
+            update: {
+              isDone: true,
+            },
+          },
         },
         select: this.selectField,
       })
@@ -115,7 +121,7 @@ export class SonminsuAnswerService {
       select: {
         id: true,
         nickName: true,
-        profileImgUrl: true,
+        image: true,
         _count: {
           select: {
             sonminsuAnswers: {

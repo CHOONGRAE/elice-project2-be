@@ -2,10 +2,12 @@
 CREATE TABLE "Auth" (
     "id" SERIAL NOT NULL,
     "email" TEXT NOT NULL,
-    "password" TEXT NOT NULL,
+    "password" TEXT,
     "user_name" TEXT,
     "birth_date" TEXT,
     "phone_number" TEXT,
+    "kakao" TEXT,
+    "google" TEXT,
 
     CONSTRAINT "Auth_pkey" PRIMARY KEY ("id")
 );
@@ -238,10 +240,13 @@ CREATE TABLE "ReadedMessages" (
     "user_id" INTEGER NOT NULL,
     "fandom_id" INTEGER NOT NULL,
     "message_id" INTEGER NOT NULL DEFAULT 0,
-    "in_room_message_id" INTEGER NOT NULL DEFAULT 0,
+    "upon_joining_message_id" INTEGER NOT NULL DEFAULT 0,
 
-    CONSTRAINT "ReadedMessages_pkey" PRIMARY KEY ("user_id")
+    CONSTRAINT "ReadedMessages_pkey" PRIMARY KEY ("user_id","fandom_id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Auth_email_key" ON "Auth"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "HashTags_tag_key" ON "HashTags"("tag");
@@ -347,3 +352,6 @@ ALTER TABLE "MessageFiles" ADD CONSTRAINT "MessageFiles_message_id_fkey" FOREIGN
 
 -- AddForeignKey
 ALTER TABLE "ReadedMessages" ADD CONSTRAINT "ReadedMessages_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "Users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ReadedMessages" ADD CONSTRAINT "ReadedMessages_fandom_id_fkey" FOREIGN KEY ("fandom_id") REFERENCES "Fandoms"("id") ON DELETE CASCADE ON UPDATE CASCADE;

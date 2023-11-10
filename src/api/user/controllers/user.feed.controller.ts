@@ -49,15 +49,12 @@ export class UserFeedController {
     return await this.feedService.getFeedsByUser(userId, pagination);
   }
 
-  @Get('my')
+  @Get(':feedId')
   @ApiOperation({
-    summary: '내가 작성한 피드 목록',
+    summary: '피드 상세, 좋아요표시',
   })
-  async getFeedsByUser(
-    @User() userId: number,
-    @Query() pagination: PaginateFeedDto,
-  ) {
-    return await this.feedService.getFeedsByAuthor(userId, pagination);
+  async getFeedById(@Param('feedId') id: number, @User() userId: number) {
+    return await this.feedService.getFeedByIdForUser(id, userId);
   }
 
   @Post()

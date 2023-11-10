@@ -4,5 +4,5 @@ export class ReadedMessageEntity implements ReadedMessages {
   userId: number;
   fandomId: number;
   messageId: number;
-  inRoomMessage_id: number;
+  uponJoiningMessageId: number;
 }
